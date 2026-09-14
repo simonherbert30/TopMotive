@@ -1,0 +1,6 @@
+# Single-file build output
+dist/
+
+# scratch
+*.swp
+.DS_Store

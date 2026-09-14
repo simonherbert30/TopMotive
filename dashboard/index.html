@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Basket Performance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="title-block">
+      <div class="title-main">Basket Performance
+        <span class="sub">TopMotive Project</span>
+      </div>
+      <div class="title-sep"></div>
+      <div class="title-sub" id="tab-title">Overview</div>
+    </div>
+    <div class="header-right">
+      <div class="refresh-label">Selection</div>
+      <div class="refresh-date" id="period-label">—</div>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Overview</button>
+    <button class="tab" data-tab="brands">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20h18M7 20V9M12 20V4M17 20v-7" stroke-linecap="round"/></svg>
+      Brand Performance</button>
+    <button class="tab" data-tab="markets">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="10" r="3"/><path d="M12 21c5-5 7-8 7-11a7 7 0 1 0-14 0c0 3 2 6 7 11z" stroke-linejoin="round"/></svg>
+      Market Leadership</button>
+    <button class="tab" data-tab="articles">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4" stroke-linecap="round"/></svg>
+      Article Insights</button>
+    <button class="tab" data-tab="trends">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 3 7-8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 4h4v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Trends</button>
+  </nav>
+
+  <!-- Slicer bar -->
+  <section class="slicers" id="slicers"></section>
+  <div class="note" id="ctx-note"></div>
+
+  <main class="page" id="page"></main>
+
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- Data (auto-generated) then app -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
