@@ -258,20 +258,20 @@ svg text{font-family:var(--sans)}
     <div class="grid g2">
       <div class="panel">
         <div class="ctitle">Market Indicator Trend — Vehicle &amp; Article</div>
-        <div class="csub">How each coverage dimension evolves per quarter for the current selection (basket-weighted).</div>
+        <div class="csub">How each coverage dimension evolves per delivered period for the current selection (basket-weighted).</div>
         <div id="legendTrendMI" class="legend"></div>
         <div id="chTrendMI"></div>
       </div>
       <div class="panel">
         <div class="ctitle">Top 10 Market Indicators</div>
-        <div class="csub">MI_TOP10 score per quarter for the selected product. ZF Aftermarket brands are drawn as bold lines; the leading competitors are shown for comparison.</div>
+        <div class="csub">MI_TOP10 score per delivered period for the selected product. ZF Aftermarket brands are drawn as bold lines; the leading competitors are shown for comparison.</div>
         <div id="chTrendComp"></div>
       </div>
     </div>
-    <div class="sect"><h2>Quarter-by-Quarter Summary</h2><div class="ln"></div></div>
+    <div class="sect"><h2>Period-by-Period Summary</h2><div class="ln"></div></div>
     <div class="panel">
-      <div class="ctitle">Headline Coverage Metrics by Quarter</div>
-      <div class="csub">Every loaded quarter for the current selection, with the latest quarter-over-quarter change and the change across the full range.</div>
+      <div class="ctitle">Headline Coverage Metrics by Period</div>
+      <div class="csub">Every delivered period for the current selection, with the latest period-over-period change and the change across the full range. Count metrics are marked <b>n/a</b> where the two periods are not the same length.</div>
       <div id="tblTrend"></div>
     </div>
   </div>
@@ -322,7 +322,18 @@ function rrect(parent,x,y,w,h,fill,r){ return el('rect',{x,y,width:Math.max(0,w)
 const F = {period:PERIODS[PERIODS.length-1], product:Object.keys(RAW.products)[0], brand:'TRW', searchType:'article', vbrand:'ALL', page:'overview'};
 const PAGE_NAME = {overview:'Overview', competition:'Competition', trends:'Trends'};
 function prevPeriod(p){ const i=PERIODS.indexOf(p); return i>0?PERIODS[i-1]:null; }
-function shortP(p){ return p? p.replace('2025','25').replace('2026','26') : ''; }
+function shortP(p){ return p? p.replace(/\b20(\d\d)\b/,'$1') : ''; }
+// Some deliveries cover a full year rather than a quarter. Ratios (the MI
+// figures) stay comparable across both; counts do not.
+const PERIOD_KIND = RAW.period_kind || {};
+function isYear(p){ return PERIOD_KIND[p]==='year'; }
+function sameKind(a,b){ return (PERIOD_KIND[a]||'quarter')===(PERIOD_KIND[b]||'quarter'); }
+// 'rules'  = coverage computed from Rules R1/R2 (ZF's own summary method)
+// 'scored' = coverage read from the gap-scoring exports
+function covBasis(ga,period){
+  const r=RAW.coverage.find(x=>x.ga===ga && x.period===period);
+  return r ? (r.basis||'scored') : null;
+}
 
 function applyMode(){
   const veh = F.searchType==='vehicle';
@@ -937,11 +948,14 @@ function tblTrend(){
     h+=`<tr><td style="font-weight:600;color:var(--navy)">${name}</td>`;
     M.forEach((m,i)=>{ const v=m[key]; const bold=i===last?';font-weight:700':'';
       h+=`<td style="text-align:right${bold}">${v==null?'—':(u==='%'?v.toFixed(1)+'%':fmt(v))}</td>`; });
-    const fmtDelta=(a,bcur)=>{ if(a==null||bcur==null) return ['—','var(--muted)'];
+    // a count compared across a full year and a quarter is meaningless; only
+    // ratios survive that comparison
+    const fmtDelta=(a,bcur,pa,pb)=>{ if(a==null||bcur==null) return ['—','var(--muted)'];
+      if(u!=='%' && !sameKind(pa,pb)) return ['n/a','var(--muted)'];
       const d=bcur-a; const col=Math.abs(d)<(u==='%'?0.05:0.5)?'var(--muted)':(d>0?'var(--green)':'var(--red)');
       return [u==='%'?(d>0?'+':'')+d.toFixed(1)+' pp':(d>0?'+':'')+fmt(d), col]; };
-    const [dvL,colL]=fmtDelta(M[prev]&&M[prev][key], M[last][key]);
-    const [dvT,colT]=fmtDelta(M[first]&&M[first][key], M[last][key]);
+    const [dvL,colL]=fmtDelta(M[prev]&&M[prev][key], M[last][key], M[prev]&&M[prev].p, M[last].p);
+    const [dvT,colT]=fmtDelta(M[first]&&M[first][key], M[last][key], M[first]&&M[first].p, M[last].p);
     h+=`<td style="text-align:right;color:${colL};font-weight:700">${dvL}</td>`;
     h+=`<td style="text-align:right;color:${colT};font-weight:700">${dvT}</td></tr>`;
   });
@@ -964,10 +978,28 @@ function renderNoDataBanner(){
   } else if(onTrends && pd.length<PERIODS.length){
     b.style.display='';
     b.innerHTML=`<b>${PROD[F.product]}</b> has been delivered for <b>${pd.join(', ')}</b> only — `+
-      `other quarters show no value rather than zero.`;
+      `other periods show no value rather than zero.`+ yearCaveat(pd.filter(isYear));
+  } else if(!onTrends && isYear(F.period)){
+    b.style.display='';
+    b.innerHTML=`<b>${F.period}</b> is a <b>full-year</b> delivery — its search and basket counts `+
+      `cover twelve months, so they are not comparable with a single quarter. Coverage `+
+      `percentages are.`+ basisCaveat(F.product,F.period);
   } else {
     b.style.display='none'; b.innerHTML='';
   }
+}
+// note appended when a coverage figure was derived from the rules rather than
+// read from the gap-scoring export, so the two are not quoted as like for like
+function basisCaveat(ga,period){
+  if(covBasis(ga,period)!=='rules') return '';
+  return ` Vehicle and Article MI for this period are computed from Rules R1/R2 `+
+         `(no gap-scoring export was delivered), which differs by up to ~1.5 pp from `+
+         `the quarterly figures.`;
+}
+function yearCaveat(years){
+  if(!years.length) return '';
+  return ` <b>${years.join(', ')}</b> ${years.length>1?'are':'is a'} full-year `+
+         `${years.length>1?'deliveries':'delivery'}; count metrics there cover twelve months.`;
 }
 function render(){
   const veh = F.searchType==='vehicle';

@@ -59,9 +59,18 @@ def read_csv(path):
         return [r for r in csv.reader(fh, delimiter=";") if r]
 
 
-def find(folder, prefix):
-    """Locate the one raw file in a quarter folder whose name starts with prefix."""
-    hits = sorted(f for f in os.listdir(folder) if f.startswith(prefix))
+def find(folder, prefix, optional=False):
+    """Locate the one raw file in a period folder whose name starts with prefix.
+
+    ``prefix`` may be a tuple of alternatives -- the MI_TOP10 export is named
+    ``arc_MI_TOP10_*`` in the quarterly deliveries but ``MI_TOP10_*Tshirt*`` in
+    the 2024 full-year one.
+    """
+    prefixes = (prefix,) if isinstance(prefix, str) else tuple(prefix)
+    hits = sorted(f for f in os.listdir(folder)
+                  if f.endswith(".csv") and f.startswith(prefixes))
+    if not hits and optional:
+        return None
     if len(hits) != 1:
         raise SystemExit("expected exactly one %r file in %s, found %s"
                          % (prefix, folder, hits))
@@ -81,12 +90,40 @@ def quarter_folders(genart):
 
 
 def period_from_filename(name):
-    """'..._01042026_30062026.csv' -> 'Q2 2026' (matches the dashboard's labels)."""
-    m = re.search(r"_(\d{2})(\d{2})(\d{4})_\d{8}\.csv$", name)
+    """Read the delivered period from a filename's date range.
+
+    '..._01042026_30062026.csv' -> 'Q2 2026'
+    '..._01012024_31122024.csv' -> 'FY 2024'  (a full-year delivery)
+    """
+    m = re.search(r"_(\d{2})(\d{2})(\d{4})_(\d{2})(\d{2})(\d{4})\.csv$", name)
     if not m:
         raise SystemExit("cannot read a period from filename %r" % name)
-    month, year = int(m.group(2)), m.group(3)
-    return "Q%d %s" % ((month - 1) // 3 + 1, year)
+    d1, m1, y1, d2, m2, y2 = (int(m.group(i)) for i in (1, 2, 3, 4, 5, 6))
+    if y1 != y2:
+        raise SystemExit("date range spans years in %r" % name)
+    if (m1, d1, m2, d2) == (1, 1, 12, 31):
+        return "FY %d" % y1
+    if (m2 - m1) != 2 or d1 != 1:
+        raise SystemExit("date range in %r is neither one quarter nor one year" % name)
+    return "Q%d %d" % ((m1 - 1) // 3 + 1, y1)
+
+
+def period_sort_key(period):
+    """Chronological order; a full year sorts before that year's quarters."""
+    kind, year = period.split()
+    return (int(year), 0 if kind == "FY" else int(kind[1]))
+
+
+def folder_name_for(period):
+    """'Q2 2026' -> '2026Q2';  'FY 2024' -> '2024FY'."""
+    kind, year = period.split()
+    return "%s%s" % (year, kind)
+
+
+def ldate_for(period):
+    """The LDATE value the basket export should carry for this period."""
+    kind, year = period.split()
+    return year if kind == "FY" else "%s/%s" % (year, kind[1])
 
 
 def num(v):
@@ -104,16 +141,29 @@ def num(v):
             return 0
 
 
-def build_name_repair(folder):
+def read_brand_table(folder):
+    """{supplier number -> brand name} from a period's basket export.
+
+    The quarterly export is GENART;LDATE;LKZ;DLNR;DLNRBEZ;QTY_POS while the
+    2024 full-year one drops LKZ, so the columns are located by header name.
+    """
+    rows = read_csv(find(folder, "dvse_BSK_DLNRGenart"))
+    hdr = [h.strip('"').upper() for h in rows[0]]
+    try:
+        i_nr, i_name = hdr.index("DLNR"), hdr.index("DLNRBEZ")
+    except ValueError:
+        raise SystemExit("basket export in %s has no DLNR/DLNRBEZ columns: %s" % (folder, hdr))
+    return {row[i_nr].strip('"'): row[i_name].strip('"')
+            for row in rows[1:] if len(row) > max(i_nr, i_name)}
+
+
+def build_name_repair(brands):
     """Map '?'-flattened brand names in the arc_* files back to real names.
 
-    The dvse_* files are proper UTF-8 and carry the same brand names in
-    DLNRBEZ, so they supply the vocabulary: 'LEMF?RDER' -> 'LEMFÖRDER'.
+    The dvse_* files are proper UTF-8 and carry the same brand names, so they
+    supply the vocabulary: 'LEMF?RDER' -> 'LEMFÖRDER'.
     """
-    vocab = set()
-    for row in read_csv(find(folder, "dvse_BSK_DLNRGenart"))[1:]:
-        if len(row) >= 5:
-            vocab.add(row[4].strip('"'))
+    vocab = set(brands.values())
 
     def repair(name):
         name = name.strip().strip('"')
@@ -124,6 +174,31 @@ def build_name_repair(folder):
         return hits[0] if len(hits) == 1 else name
 
     return repair
+
+
+def build_canonical_names(genart):
+    """{old brand name -> current brand name} for one product group.
+
+    TecDoc suppliers get renamed between deliveries -- supplier 6 is 'LuK' in
+    the 2024 files and 'Schaeffler LuK' from 2026 on. Keyed on the supplier
+    number, so a trend line follows the supplier rather than breaking at the
+    rename. Names that map to more than one supplier are left alone.
+    """
+    per_period = [read_brand_table(f) for f in quarter_folders(genart)]
+    newest = {}                      # supplier number -> most recent name
+    for table in per_period:         # folders come oldest first
+        newest.update(table)
+    owners = defaultdict(set)        # name -> supplier numbers that ever used it
+    for table in per_period:
+        for nr, name in table.items():
+            owners[name].add(nr)
+    alias = {}
+    for table in per_period:
+        for nr, name in table.items():
+            current = newest.get(nr)
+            if current and current != name and len(owners[name]) == 1:
+                alias[name] = current
+    return alias
 
 
 def zf_column(header, zf_brand, repair):
@@ -139,67 +214,92 @@ def pc(part, whole, digits=2):
 
 
 # ------------------------------------------------------------ per-product ETL
-def build_quarter(genart, zf_brand, folder, out):
-    repair = build_name_repair(folder)
+def build_quarter(genart, zf_brand, folder, out, alias):
+    brands = read_brand_table(folder)
+    repair = build_name_repair(brands)
 
-    f_mi = find(folder, "arc_MI_TOP10_")
-    f_art = find(folder, "arc_artdir_gap_scoring_")
-    f_veh = find(folder, "arc_vehicle_gap_scoring_")
+    def brand_name(raw):
+        name = repair(raw)
+        return alias.get(name, name)
+
+    f_mi = find(folder, ("arc_MI_TOP10_", "MI_TOP10_"))
     f_ads = find(folder, "dvse_ADS+")
     f_kty = find(folder, "dvse_KTypGap")
     f_bsk = find(folder, "dvse_BSK_DLNRGenart")
+    # the 2024 full-year delivery has no gap-scoring exports
+    f_art = find(folder, "arc_artdir_gap_scoring_", optional=True)
+    f_veh = find(folder, "arc_vehicle_gap_scoring_", optional=True)
 
-    period = period_from_filename(os.path.basename(f_art))
-    for f in (f_mi, f_veh, f_ads, f_kty, f_bsk):
-        if period_from_filename(os.path.basename(f)) != period:
+    period = period_from_filename(os.path.basename(f_ads))
+    for f in (f_mi, f_veh, f_art, f_kty, f_bsk):
+        if f and period_from_filename(os.path.basename(f)) != period:
             raise SystemExit("mixed periods in %s" % folder)
 
     # cross-check the filename period against LDATE in the basket export
     ldates = {r[1].strip('"') for r in read_csv(f_bsk)[1:] if len(r) > 1}
-    want = "%s/%s" % (period.split()[1], period[1])
+    want = ldate_for(period)
     if ldates != {want}:
         raise SystemExit("period mismatch in %s: filenames say %s (LDATE %s), file has %s"
                          % (folder, period, want, sorted(ldates)))
     # the folder name must agree too, so a misfiled delivery fails the build
-    expect_dir = "%sQ%s" % (period.split()[1], period[1])
+    expect_dir = folder_name_for(period)
     if os.path.basename(folder) != expect_dir:
         raise SystemExit("folder %s holds %s data (expected folder name %s)"
                          % (folder, period, expect_dir))
+    if bool(f_art) != bool(f_veh):
+        raise SystemExit("%s has only one of the two gap-scoring exports" % folder)
+    # 'scored' = coverage read from the gap-scoring exports (the quarterly
+    # deliveries); 'rules' = coverage computed from R1/R2 over ADS+/KTypGap,
+    # which is how ZF's own 2024 summary derives it.
+    basis = "scored" if f_art else "rules"
 
     # ---- Market Indicator (MI_TOP10) -------------------------------------
     for row in read_csv(f_mi)[1:]:
         if len(row) < 3:
             continue
-        brand = repair(row[1])
+        brand = brand_name(row[1])
         out["mi"].append({"period": period, "ga": genart, "brand": brand,
                           "pos": num(row[0]), "score": round(float(num(row[2])), 2),
                           "zf": brand in ZF_BRANDS})
 
-    # ---- article direction: basket coverage ------------------------------
-    art = read_csv(f_art)
-    a_hdr, a_abs = art[0], art[1]
-    a_zf = zf_column(a_hdr, zf_brand, repair)
-    art_basket = num(a_abs[3])          # total GENART_QTY_POS across all search words
-    art_cov = num(a_abs[a_zf])          # of which covered by the ZF brand's range
-    # brand columns are 0/1 flags per search word; keep only the ZF ones
-    zf_cols = {i: repair(h) for i, h in enumerate(a_hdr[5:], 5) if repair(h) in ZF_BRANDS}
-    art_rows = [r for r in art[3:] if len(r) > max(zf_cols or {a_zf: 0})]
-    covering = {r[2].strip('"'): sorted(b for i, b in zf_cols.items() if num(r[i]) > 0)
-                for r in art_rows}
-
-    # ---- vehicle direction: basket coverage ------------------------------
-    veh = read_csv(f_veh)
-    v_hdr, v_abs = veh[0], veh[1]
-    v_zf = zf_column(v_hdr, zf_brand, repair)
-    veh_demand = num(v_abs[3])          # total BSK_POS across all vehicle types
-    veh_cov = num(v_abs[v_zf])
-    veh_rows = [(r[2].strip('"'), num(r[3]), num(r[v_zf])) for r in veh[3:] if len(r) > v_zf]
-
-    # ---- vehicle master data (KType -> manufacturer / model) -------------
-    ktyp = {}
+    # ---- vehicle master data (KType -> manufacturer / model, article count)
+    ktyp, ktyp_rows = {}, []
     for r in read_csv(f_kty)[1:]:
         if len(r) > 6:
-            ktyp[r[2].strip('"')] = (r[5].strip('"'), r[6].strip('"'))
+            typenr = r[2].strip('"')
+            ktyp[typenr] = (r[5].strip('"'), r[6].strip('"'))
+            ktyp_rows.append((typenr, num(r[3]), num(r[4])))   # TYPENR, BSK_POS, ART_CNT
+
+    # ---- article direction: basket coverage ------------------------------
+    covering = {}
+    if f_art:
+        art = read_csv(f_art)
+        a_hdr, a_abs = art[0], art[1]
+        a_zf = zf_column(a_hdr, zf_brand, repair)
+        art_basket = num(a_abs[3])      # total GENART_QTY_POS across all search words
+        art_cov = num(a_abs[a_zf])      # of which covered by the ZF brand's range
+        # brand columns are 0/1 flags per search word; keep only the ZF ones
+        zf_cols = {i: brand_name(h) for i, h in enumerate(a_hdr[5:], 5)
+                   if brand_name(h) in ZF_BRANDS}
+        art_rows = [r for r in art[3:] if len(r) > max(zf_cols or {a_zf: 0})]
+        covering = {r[2].strip('"'): sorted(b for i, b in zf_cols.items() if num(r[i]) > 0)
+                    for r in art_rows}
+
+    # ---- vehicle direction: basket coverage ------------------------------
+    if f_veh:
+        veh = read_csv(f_veh)
+        v_hdr, v_abs = veh[0], veh[1]
+        v_zf = zf_column(v_hdr, zf_brand, repair)
+        veh_demand = num(v_abs[3])      # total BSK_POS across all vehicle types
+        veh_cov = num(v_abs[v_zf])
+        veh_rows = [(r[2].strip('"'), num(r[3]), num(r[v_zf])) for r in veh[3:] if len(r) > v_zf]
+    else:
+        # Rule R2: a vehicle is served when the analysed brand has ART_CNT > 0.
+        # ART_CNT was verified to equal the brand's gap-scoring column for every
+        # KType in the quarterly deliveries, so this is the same signal.
+        veh_rows = ktyp_rows
+        veh_demand = sum(b for _, b, _ in veh_rows)
+        veh_cov = sum(b for _, b, c in veh_rows if c > 0)
 
     # ---- article search log (ADS+) ---------------------------------------
     ads = read_csv(f_ads)
@@ -221,8 +321,15 @@ def build_quarter(genart, zf_brand, folder, out):
               if not_found(r) and cell(r, "GENART_DLNR_QTY_POS") > 0)
     oe = sum(cell(r, "SUMMCNT") for r in ads_rows if cell(r, "U4_OE") == 1)
 
+    if not f_art:
+        # No gap-scoring export: fall back to Rule R1 over the basket positions
+        # in ADS+. This is exactly how ZF's own 2024 summary workbook computes
+        # "ZF Product in Search Result" (verified row-for-row against it).
+        art_basket = sum(cell(r, "GENART_QTY_POS") for r in ads_rows)
+        art_cov = sum(cell(r, "GENART_QTY_POS") for r in ads_rows if not not_found(r))
+
     out["coverage"].append({
-        "period": period, "ga": genart, "brand": zf_brand,
+        "period": period, "ga": genart, "brand": zf_brand, "basis": basis,
         "art_basket": art_basket, "art_cov": art_cov, "art_mi": pc(art_cov, art_basket),
         "art_searches": art_searches, "art_found_searches": art_found_searches, "in1": in1,
         "veh_demand": veh_demand, "veh_cov": veh_cov, "veh_mi": pc(veh_cov, veh_demand),
@@ -305,18 +412,27 @@ def main():
         if zf_brand not in ZF_BRANDS:
             raise SystemExit("%r is not in zf_brands" % zf_brand)
         data["products"][genart] = label
-        periods = [build_quarter(genart, zf_brand, f, data)
+        alias = build_canonical_names(genart)
+        periods = [build_quarter(genart, zf_brand, f, data, alias)
                    for f in quarter_folders(genart)]
         if len(set(periods)) != len(periods):
-            raise SystemExit("product group %s has duplicate quarters: %s" % (genart, periods))
+            raise SystemExit("product group %s has duplicate periods: %s" % (genart, periods))
         built[genart] = periods
-        print("  %-5s %-30s %-18s (ZF brand %s, DS%s)"
-              % (genart, label, ", ".join(periods), zf_brand, ds))
+        renamed = "  [%s]" % ", ".join("%s->%s" % kv for kv in sorted(alias.items())) if alias else ""
+        print("  %-5s %-30s %-26s (ZF brand %s, DS%s)%s"
+              % (genart, label, ", ".join(periods), zf_brand, ds, renamed))
 
+    # a full-year delivery predates the quarterly series, so it leads the axis
     for periods in built.values():
         for p in periods:
             if p not in data["periods"]:
-                raise SystemExit("period %r is not in the dashboard's period list" % p)
+                if not p.startswith("FY "):
+                    raise SystemExit("period %r is not in the dashboard's period list" % p)
+                data["periods"].insert(0, p)
+    data["periods"] = sorted(set(data["periods"]), key=period_sort_key)
+    # tell the dashboard which periods are full years rather than quarters
+    data["period_kind"] = {p: ("year" if p.startswith("FY ") else "quarter")
+                           for p in data["periods"]}
 
     # keep the product dropdown in genart order
     data["products"] = {k: data["products"][k]

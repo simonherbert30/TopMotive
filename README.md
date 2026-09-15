@@ -87,9 +87,10 @@ Two sources are merged, and the split is deliberate:
   TopMotive export, e.g. `data/raw_search_mi/479/2026Q2/`.
 
 ## Adding a product group or quarter
-1. Drop the export folder's CSVs into `data/raw_search_mi/<genart>/<quarter>/`
-   (e.g. `479/2026Q3/`). Adding a quarter to an existing group needs no code
-   change — the build picks up every sub-folder.
+1. Drop the export folder's CSVs into `data/raw_search_mi/<genart>/<period>/`
+   (e.g. `479/2026Q3/`, or `479/2024FY/` for a full-year delivery). Adding a
+   period to an existing group needs no code change — the build picks up every
+   sub-folder.
 2. For a new group, add an entry to `NEW_PRODUCTS` in `search_mi/build.py`:
    `genart -> (label, supplier number, ZF brand)`. The `DS<n>` in the filenames
    *is* that supplier number (DS32 = SACHS, DS35 = LEMFÖRDER, DS68 = ZF).
@@ -122,8 +123,9 @@ Per the definitions in *2025-04-29 TopMotive Concept* (Data Rules / Indicators):
 the gap-scoring column are the same signal.
 
 ### Cross-check
-For every group and quarter built from raw CSVs, the derived `combined_mi`
-reproduces the provider's own published MI_TOP10 score **exactly** (6 of 6):
+For every **quarter** built from the full seven-file export, the derived
+`combined_mi` reproduces the provider's own published MI_TOP10 score
+**exactly** (6 of 6):
 
 | Group / ZF brand | Q1 2026 | Q2 2026 |
 |---|---|---|
@@ -132,6 +134,12 @@ reproduces the provider's own published MI_TOP10 score **exactly** (6 of 6):
 | Oil Change Kit / ZF | 73.77 | 73.39 |
 
 That pins the formula to the provider's method.
+
+The FY 2024 deliveries are checked a second way: ZF's own summary workbook
+(`4921/2024FY/2025-05-01-Summary-Oil-Change-Kits.xlsx`) publishes 75.27 %
+article and 78.13 % vehicle coverage, and the build reproduces both to the
+decimal. Its per-row "ZF Product in Search Result" flag matches Rule R1 on
+1932 of 1932 article rows and Rule R2 on 6703 of 6703 vehicle rows.
 
 The same check on the legacy groups scatters between −1.2 and +3.5 pp, so those
 five were built slightly differently. Their figures are left untouched — the raw
@@ -146,10 +154,47 @@ inputs no longer exist to rebuild them.
 - The vehicle gap export carries a few hundred more KTypes than `KTypGap`. Those
   count toward `veh_demand` / `veh_cov` but cannot be labelled, so they are
   excluded from the per-manufacturer and per-model breakdowns.
-- Product groups enter the programme at different quarters. 479, 1561 and 4921
-  currently cover Q1 2026 and Q2 2026; the five legacy groups cover Q1 2025
-  onwards. Quarters with no delivery render as "—" with an explanatory banner,
-  never as 0 %.
+- Product groups enter the programme at different periods. 479 and 4921 cover
+  FY 2024, Q1 2026 and Q2 2026; 1561 covers Q1 2026 and Q2 2026; the five
+  legacy groups cover Q1 2025 onwards. Periods with no delivery render as "—"
+  with an explanatory banner, never as 0 %.
 - The MI_TOP10 field changes between quarters — 479 swaps BorgWarner for
   WESTLAKE, 1561 swaps PMM for ELECTRIC LIFE. A brand absent from one quarter
   simply has no point on that quarter's trend line.
+
+## The FY 2024 baseline
+
+479 and 4921 also have a **full-year 2024** delivery. It differs from the
+quarterly ones in two ways that the dashboard has to be honest about:
+
+**It is a year, not a quarter.** Coverage percentages stay comparable, but
+search and basket counts cover twelve months. The period is labelled `FY 2024`,
+selecting it raises an explanatory banner, and in the period summary any count
+metric compared across two different period lengths reads **n/a** rather than a
+misleading delta.
+
+**It has five files, not seven** — both `arc_*_gap_scoring` exports are
+missing. So for FY 2024 only:
+
+| | quarterly deliveries | FY 2024 |
+|---|---|---|
+| Article coverage | `arc_artdir_gap_scoring` "Absolut" row | Rule R1 over `GENART_QTY_POS` in ADS+ |
+| Vehicle coverage | `arc_vehicle_gap_scoring` "Absolut" row | Rule R2 (`ART_CNT > 0`) over `BSK_POS` in KTypGap |
+
+This is the method ZF's own 2024 summary workbook uses, and it reproduces that
+workbook exactly. Measured against the quarters where both sources exist, it
+runs within **0.36 pp** on vehicle coverage but up to **1.5 pp** on article
+coverage, so the two bases are not quoted as like for like: each `coverage` row
+carries a `basis` field (`scored` or `rules`) and the UI says so when showing a
+`rules` period. It is also why `combined_mi` equals the published MI_TOP10
+score exactly for the quarters but not for FY 2024.
+
+The Market Indicator headline for FY 2024 is the provider's published MI_TOP10
+score, so that figure is authoritative regardless of basis.
+
+### Brand renames
+TecDoc suppliers get renamed between deliveries — supplier 6 is `LuK` in the
+2024 files and `Schaeffler LuK` from 2026 on. `build.py` keys brands on the
+supplier number and canonicalises to the most recent name, so a trend line
+follows the supplier instead of breaking at the rename. A name used by more
+than one supplier is left alone. Renames applied are printed on every build.
