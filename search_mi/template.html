@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search &amp; Market Indicator Dashboard — Automotive Aftermarket</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#003478; --navy-soft:#1a4d8f;
+  --blue:#1f6fd0; --blue-d:#0a55b4;
+  --teal:#19b3a6; --teal-d:#0f9488;
+  --amber:#e8a33d; --red:#d65b4a; --green:#2faa6e;
+  --bg:#eceff4; --card:#ffffff;
+  --line:#dbe3ee; --line-soft:#eef2f7;
+  --ink:#21354d; --muted:#6b7c93;
+  --hdr1:#eef3f8; --hdr2:#e0e8f2;
+  --serif:'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --sans:'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
+  --shadow:0 1px 3px rgba(16,46,84,.07), 0 1px 1px rgba(16,46,84,.04);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);font-family:var(--sans);color:var(--ink);font-size:13px;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:0 18px 60px}
+
+/* HEADER */
+.topbar{background:linear-gradient(180deg,var(--hdr1),var(--hdr2));border-bottom:2px solid #c9d6e6}
+.topbar-inner{max-width:1480px;margin:0 auto;display:flex;align-items:center;gap:0;padding:14px 26px}
+.logo{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:60px;height:60px;border:3px solid var(--navy);border-radius:50%}
+.logo svg{width:42px;height:30px}
+.divider{width:2px;height:46px;background:#b9c8dd;margin:0 24px}
+.brandtitle{font-family:var(--serif);color:var(--navy);font-weight:600;font-size:30px;letter-spacing:.2px;line-height:1.05}
+.brandtitle .sub{display:block;font-size:13px;font-weight:500;letter-spacing:.4px;color:var(--navy-soft);font-family:var(--sans);margin-top:3px}
+.section-name{font-family:var(--serif);color:var(--navy);font-weight:500;font-size:27px}
+.spacer{flex:1}
+
+/* TABS */
+.tabs{display:flex;gap:6px;max-width:1480px;margin:0 auto;padding:0 26px;border-bottom:1px solid #c9d6e6}
+.tab{appearance:none;border:none;background:transparent;font-family:var(--sans);font-size:13.5px;font-weight:700;color:var(--navy-soft);
+  padding:12px 18px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+.tab:hover{color:var(--navy);background:rgba(31,111,208,.05)}
+.tab.active{color:var(--navy);border-bottom-color:var(--blue)}
+.tab svg{width:16px;height:16px}
+
+/* FILTER BAR */
+.filterbar{display:flex;gap:16px;align-items:stretch;margin:16px 0 14px;flex-wrap:wrap}
+.fgroup{background:#dfe9f5;border:1px solid #cdddee;border-radius:10px;padding:11px 14px;display:flex;gap:18px;flex-wrap:wrap}
+.fstand{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:5px;min-width:150px}
+.field label{font-weight:700;color:var(--navy);font-size:12px;border-bottom:1.5px solid #b9cbe2;padding-bottom:3px}
+.field select{appearance:none;-webkit-appearance:none;background:#fff;border:1px solid #c4d3e6;border-radius:6px;
+  padding:7px 30px 7px 11px;font-family:var(--sans);font-size:13px;color:var(--ink);cursor:pointer;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%231f6fd0' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center}
+.field select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(31,111,208,.15)}
+
+/* segmented search-type toggle */
+.segwrap{display:flex;flex-direction:column;gap:5px}
+.segwrap .lbl{font-weight:700;color:var(--navy);font-size:12px;border-bottom:1.5px solid #b9cbe2;padding-bottom:3px}
+.seg{display:inline-flex;background:#dfe9f5;border:1px solid #cdddee;border-radius:8px;padding:3px;gap:3px}
+.seg button{appearance:none;border:none;background:transparent;font-family:var(--sans);font-size:12.5px;font-weight:700;color:var(--navy-soft);
+  padding:7px 16px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap}
+.seg button svg{width:15px;height:15px}
+.seg button.active{background:#fff;color:var(--navy);box-shadow:0 1px 2px rgba(16,46,84,.12)}
+.seg button:not(.active):hover{color:var(--navy)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:3fr 1fr;gap:14px;margin-bottom:14px;align-items:stretch}
+.kpi-group{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;border:1.5px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:14px 16px}
+.kpi .kt{color:var(--navy);font-weight:700;font-size:13px;letter-spacing:.2px;margin-bottom:2px}
+.kpi .krow{display:flex;align-items:center;gap:12px;margin-top:8px}
+.kpi .kicon{flex:0 0 auto;color:var(--blue);display:flex}
+.kpi .kbar{width:1.5px;height:34px;background:var(--line)}
+.kpi .kval{font-size:25px;font-weight:700;color:var(--navy);line-height:1;font-feature-settings:"tnum"}
+.kpi .kval small{font-size:14px;font-weight:600;color:var(--navy-soft)}
+.kpi .kdelta{font-size:11.5px;font-weight:700;margin-top:7px;display:flex;align-items:center;gap:4px}
+.kpi .kdelta.up{color:var(--green)} .kpi .kdelta.down{color:var(--red)} .kpi .kdelta.flat{color:var(--muted)}
+.kpi .ksub{font-size:11px;color:var(--muted);margin-top:2px}
+.kpi-accent{border-color:var(--blue);border-width:2px;background:linear-gradient(135deg,#f0f5fd 0%,var(--card) 60%)}
+.kpi-accent .kt{color:var(--blue)}
+.kpi-accent .kval{color:var(--blue)}
+
+/* LAYOUT */
+.overview{display:grid;grid-template-columns:1.2fr 2px 1fr;gap:0 22px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px}
+.vdiv{background:linear-gradient(180deg,transparent,var(--blue),transparent);opacity:.5;width:2px}
+.left-main{padding-right:4px}
+.ctitle{font-weight:700;color:var(--navy);font-size:15px;margin:2px 0 2px}
+.csub{color:var(--muted);font-size:11px;margin-bottom:6px;line-height:1.4}
+.nodata{background:#fdf6e8;border:1px solid #edd9ac;border-left:4px solid var(--amber);border-radius:8px;
+  padding:11px 15px;margin:0 0 16px;font-size:12.5px;color:#7a5c22;line-height:1.5}
+.nodata b{color:#5e4517}
+.legend{display:flex;gap:16px;align-items:center;margin:4px 0 8px;flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink);font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* SECTIONS */
+.sect{margin:22px 0 8px;display:flex;align-items:center;gap:14px}
+.sect h2{font-family:var(--serif);color:var(--navy);font-weight:600;font-size:21px;margin:0}
+.sect .ln{flex:1;height:1.5px;background:linear-gradient(90deg,var(--blue),transparent)}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:1fr 1fr}
+.g23{grid-template-columns:1.4fr 1fr}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:16px 18px}
+.page{display:none}
+.page.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* tables */
+table.dt{width:100%;border-collapse:collapse;font-size:12px}
+table.dt th{text-align:left;color:var(--navy);font-weight:700;border-bottom:2px solid var(--line);padding:7px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+table.dt td{padding:7px 8px;border-bottom:1px solid var(--line-soft);font-feature-settings:"tnum"}
+table.dt tr:hover td{background:#f5f9fe}
+.tag{display:inline-block;padding:2px 8px;border-radius:11px;font-size:10.5px;font-weight:700}
+.tag.oe{background:#eef3ff;color:var(--blue-d)}
+
+/* insights */
+.insights{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:10px;box-shadow:var(--shadow);padding:13px 15px}
+.ins.teal{border-left-color:var(--teal)} .ins.amber{border-left-color:var(--amber)}
+.ins.red{border-left-color:var(--red)} .ins.green{border-left-color:var(--green)}
+.ins h4{margin:0 0 5px;color:var(--navy);font-size:12.5px;font-weight:700}
+.ins p{margin:0;color:var(--ink);font-size:12px;line-height:1.5}
+.ins b{color:var(--navy)}
+
+/* trend note */
+.note{background:#eef3fb;border:1px solid #cfe0f2;border-radius:10px;padding:12px 16px;color:var(--navy-soft);font-size:12px;line-height:1.5;display:flex;gap:10px;align-items:flex-start;margin-bottom:16px}
+.note svg{flex:0 0 auto;margin-top:1px}
+
+svg text{font-family:var(--sans)}
+.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;padding:6px 10px;border-radius:6px;font-size:11.5px;opacity:0;transition:opacity .1s;z-index:99;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:260px}
+.foot{color:var(--muted);font-size:11px;text-align:center;margin-top:26px;line-height:1.6}
+.bar-anim{transition:width .6s cubic-bezier(.2,.7,.2,1), height .6s cubic-bezier(.2,.7,.2,1), y .6s cubic-bezier(.2,.7,.2,1)}
+@media(max-width:1180px){
+  .overview{grid-template-columns:1fr} .vdiv{display:none}
+  .kpis{grid-template-columns:1fr}
+  .kpi-group{grid-template-columns:repeat(3,1fr)}
+  .g2,.g23{grid-template-columns:1fr} .insights{grid-template-columns:1fr}
+  .tabs{overflow-x:auto}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brandtitle">Search &amp; Market Indicator
+      <span class="sub">TopMotive Project</span>
+    </div>
+    <div class="divider"></div>
+    <div class="section-name" id="sectionName">Overview</div>
+    <div class="spacer"></div>
+  </div>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-page="overview">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Overview</button>
+    <button class="tab" data-page="competition">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20h18M7 20V9M12 20V4M17 20v-7" stroke-linecap="round"/></svg>
+      Competition</button>
+    <button class="tab" data-page="trends">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 3 7-8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 4h4v4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Trends</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- FILTERS -->
+  <div class="filterbar">
+    <div class="fgroup">
+      <div class="field" id="fldPeriod"><label>Period</label><select id="fPeriod"></select></div>
+      <div class="field"><label>Product Category</label><select id="fProduct"></select></div>
+      <div class="field" id="fldBrand"><label>ZF Brand</label><select id="fBrand"></select></div>
+    </div>
+    <div class="fstand">
+      <div class="field" id="fldVbrand" style="display:none"><label>Vehicle Brand Focus</label>
+        <select id="fVbrand"><option value="ALL">All vehicle brands</option></select></div>
+    </div>
+  </div>
+
+  <!-- shown when the selected product group has no delivery for the selected quarter -->
+  <div id="noDataBanner" class="nodata" style="display:none"></div>
+
+  <!-- ============ PAGE 1: OVERVIEW ============ -->
+  <div class="page active" data-page="overview">
+    <div class="kpis" id="kpis"></div>
+    <div class="segwrap" id="segSearch" style="margin-bottom:14px">
+      <div class="seg" id="searchToggle">
+        <button data-st="article" class="active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4" stroke-linecap="round"/></svg>
+          Article searches</button>
+        <button data-st="vehicle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 21 8l2 5v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Vehicle searches</button>
+      </div>
+    </div>
+
+    <!-- ARTICLE-SEARCH MODE -->
+    <div id="ovArticle">
+      <div class="grid g2">
+        <div class="panel">
+          <div class="ctitle">Basket Coverage</div>
+          <div class="csub">Share of article-search basket demand (GENART_QTY_POS — basket positions for the analysis article) that available ZF articles cover. Equals the Article Market Indicator.</div>
+          <div class="legend"><span><i class="dot" style="background:var(--blue)"></i>Covered</span><span><i class="dot" style="background:var(--teal)"></i>Gap</span></div>
+          <div id="chDonut"></div>
+        </div>
+        <div class="panel">
+          <div class="ctitle">Search Coverage</div>
+          <div class="csub">Share of article searches (SUMMCNT — total query volume) that returned a matching ZF article. Counts every search, including those that never converted to a relevant basket position.</div>
+          <div class="legend"><span><i class="dot" style="background:var(--blue)"></i>Covered</span><span><i class="dot" style="background:var(--teal)"></i>Gap</span></div>
+          <div id="chDonutSearch"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VEHICLE-SEARCH MODE -->
+    <div id="ovVehicle" style="display:none">
+      <div class="grid g23">
+        <div class="panel">
+          <div class="ctitle">Search Demand by Vehicle Brand</div>
+          <div class="csub">Vehicle-search basket positions (additions) by car manufacturer, split into covered and open gap.</div>
+          <div class="legend"><span><i class="dot" style="background:var(--blue)"></i>Covered</span><span><i class="dot" style="background:var(--teal)"></i>Gap</span></div>
+          <div id="chVbrand"></div>
+        </div>
+        <div class="panel">
+          <div class="ctitle">Basket Coverage</div>
+          <div class="csub">Share of vehicle-search basket demand (BSK_POS — basket positions) that available ZF articles cover. Equals the Vehicle Market Indicator. Vehicle searches have no query count, only basket positions.</div>
+          <div class="legend"><span><i class="dot" style="background:var(--blue)"></i>Covered</span><span><i class="dot" style="background:var(--teal)"></i>Gap</span></div>
+          <div id="chDonutVeh"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PAGE 2: COMPETITION & COVERAGE QUALITY ============ -->
+  <div class="page" data-page="competition">
+    <div class="sect"><h2>Competitive Positioning</h2><div class="ln"></div></div>
+    <div class="grid g23">
+      <div class="panel">
+        <div class="ctitle">Market Indicator Ranking (Top brands)</div>
+        <div class="csub">Full MI_TOP10 standings for the selection; ZF Aftermarket brands highlighted in navy.</div>
+        <div id="chMIrank"></div>
+      </div>
+      <div class="panel">
+        <div class="ctitle">Market Indicator Movement <span id="moveSfx" style="font-weight:500;color:var(--muted);font-size:11px"></span></div>
+        <div class="csub">Change in MI between the two periods — gainers in green, losers in red.</div>
+        <div id="chMImove"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============ PAGE 4: TRENDS ============ -->
+  <div class="page" data-page="trends">
+    <div class="sect"><h2>Market Indicator Over Time</h2><div class="ln"></div></div>
+    <div class="grid g2">
+      <div class="panel">
+        <div class="ctitle">Market Indicator Trend — Vehicle &amp; Article</div>
+        <div class="csub">How each coverage dimension evolves per quarter for the current selection (basket-weighted).</div>
+        <div id="legendTrendMI" class="legend"></div>
+        <div id="chTrendMI"></div>
+      </div>
+      <div class="panel">
+        <div class="ctitle">Top 10 Market Indicators</div>
+        <div class="csub">MI_TOP10 score per quarter for the selected product. ZF Aftermarket brands are drawn as bold lines; the leading competitors are shown for comparison.</div>
+        <div id="chTrendComp"></div>
+      </div>
+    </div>
+    <div class="sect"><h2>Quarter-by-Quarter Summary</h2><div class="ln"></div></div>
+    <div class="panel">
+      <div class="ctitle">Headline Coverage Metrics by Quarter</div>
+      <div class="csub">Every loaded quarter for the current selection, with the latest quarter-over-quarter change and the change across the full range.</div>
+      <div id="tblTrend"></div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script id="data" type="application/json">__TM_SEARCH_MI_DATA__</script>
+<script>
+"use strict";
+const RAW = JSON.parse(document.getElementById('data').textContent);
+/* ============ Helpers ============ */
+const $ = id => document.getElementById(id);
+const tip = $('tip');
+const PROD = RAW.products;
+const PERIODS = RAW.periods;
+const ZF = new Set(RAW.zf_brands);
+const C = {blue:'#1f6fd0',blued:'#0a55b4',teal:'#19b3a6',teald:'#0f9488',navy:'#003478',
+           grey:'#9fb6d2',amber:'#e8a33d',red:'#d65b4a',green:'#2faa6e'};
+
+function fmt(n){ n=+n||0;
+  if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2).replace(/\.?0+$/,'')+'M';
+  if(Math.abs(n)>=1e3) return (n/1e3).toFixed(1).replace(/\.0$/,'')+'K';
+  return String(Math.round(n));
+}
+function fmtFull(n){ return (Math.round(+n||0)).toLocaleString('en-US'); }
+function pct(n){ return (Math.round((+n||0)*10)/10).toFixed(1)+'%'; }
+function showTip(e,html){ tip.innerHTML=html; tip.style.opacity=1; moveTip(e); }
+function moveTip(e){ let x=e.clientX+14,y=e.clientY+14;
+  if(x+tip.offsetWidth>innerWidth) x=e.clientX-tip.offsetWidth-14;
+  tip.style.left=x+'px'; tip.style.top=y+'px'; }
+function hideTip(){ tip.style.opacity=0; }
+const ns='http://www.w3.org/2000/svg';
+function svg(w,h){ const s=document.createElementNS(ns,'svg'); s.setAttribute('viewBox',`0 0 ${w} ${h}`);
+  s.setAttribute('width','100%'); s.setAttribute('height',h); s.style.display='block'; s.style.overflow='visible'; return s; }
+function el(tag,attrs,parent){ const e=document.createElementNS(ns,tag);
+  for(const k in attrs) e.setAttribute(k,attrs[k]); if(parent) parent.appendChild(e); return e; }
+function txt(parent,x,y,s,attrs){ const t=el('text',Object.assign({x,y},attrs||{}),parent); t.textContent=s; return t; }
+function clear(node){ node.innerHTML=''; }
+function emptyNote(msg){
+  return `<div style="padding:26px 14px;text-align:center;color:var(--muted);font-size:12.5px;line-height:1.5">${msg}</div>`;
+}
+function rrect(parent,x,y,w,h,fill,r){ return el('rect',{x,y,width:Math.max(0,w),height:Math.max(0,h),rx:r||2,fill},parent); }
+
+/* ============ Filter state ============ */
+const F = {period:PERIODS[PERIODS.length-1], product:Object.keys(RAW.products)[0], brand:'TRW', searchType:'article', vbrand:'ALL', page:'overview'};
+const PAGE_NAME = {overview:'Overview', competition:'Competition', trends:'Trends'};
+function prevPeriod(p){ const i=PERIODS.indexOf(p); return i>0?PERIODS[i-1]:null; }
+function shortP(p){ return p? p.replace('2025','25').replace('2026','26') : ''; }
+
+function applyMode(){
+  const veh = F.searchType==='vehicle';
+  // search-type toggle buttons
+  document.querySelectorAll('#searchToggle button').forEach(b=>b.classList.toggle('active', b.dataset.st===F.searchType));
+  // Vehicle Brand Focus filter is not shown anywhere
+  $('fldVbrand').style.display = 'none';
+  // Brand filter is only relevant on the Overview page
+  const fldB=$('fldBrand'); if(fldB) fldB.style.display = (F.page==='overview') ? '' : 'none';
+  // the Period filter is not meaningful on the Trends page (it spans all periods)
+  $('fldPeriod').style.display = (F.page==='trends') ? 'none' : '';
+  // the Search Type toggle only applies on the Overview page
+  $('segSearch').style.display = (F.page==='overview') ? '' : 'none';
+  // overview blocks
+  const ovA=$('ovArticle'), ovV=$('ovVehicle'); if(ovA&&ovV){ ovA.style.display=veh?'none':''; ovV.style.display=veh?'':'none'; }
+}
+
+function initFilters(){
+  const fp=$('fPeriod'); PERIODS.forEach(p=>fp.add(new Option(p,p))); fp.value=F.period;
+  const fpr=$('fProduct');
+  Object.entries(PROD).forEach(([g,n])=>fpr.add(new Option(`${n} (${g})`,g))); fpr.value=F.product;
+  const fb=$('fBrand'); populateBrandFilter();
+  // vehicle-brand focus options (all manufacturers across data, by total demand)
+  const vbAgg={}; RAW.vbrand.forEach(r=>{ vbAgg[r.vb]=(vbAgg[r.vb]||0)+r.demand; });
+  const fv=$('fVbrand'); Object.entries(vbAgg).sort((a,b)=>b[1]-a[1]).slice(0,25).forEach(([b])=>fv.add(new Option(b,b)));
+  fp.onchange=e=>{F.period=e.target.value; render();};
+  fpr.onchange=e=>{F.product=e.target.value; populateBrandFilter(); render();};
+  fb.onchange=e=>{F.brand=e.target.value; render();};
+  fv.onchange=e=>{F.vbrand=e.target.value; render();};
+  // search-type toggle
+  document.querySelectorAll('#searchToggle button').forEach(b=>{
+    b.onclick=()=>{ F.searchType=b.dataset.st; applyMode(); render(); };
+  });
+  // tab navigation
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.onclick=()=>{
+      F.page=t.dataset.page;
+      document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+      document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.dataset.page===F.page));
+      $('sectionName').textContent = PAGE_NAME[F.page];
+      applyMode();
+      render();
+      window.scrollTo({top:0,behavior:'smooth'});
+    };
+  });
+  applyMode();
+}
+function products(){ return [F.product]; }
+// ZF Aftermarket brands that actually carry coverage data for this product group.
+// Driven by RAW.zf_brands so a newly added product group (e.g. ZF on Oil Change Kit)
+// does not need a code change.
+const ZF_ORDER=['TRW','SACHS','LEMFÖRDER','ZF'];
+function zfBrandOrder(){
+  const known=ZF_ORDER.filter(b=>ZF.has(b));
+  return known.concat(RAW.zf_brands.filter(b=>!known.includes(b)));
+}
+function brandsForProduct(ga){
+  const set=new Set(RAW.coverage.filter(r=>r.ga===ga).map(r=>r.brand));
+  return zfBrandOrder().filter(b=>set.has(b));
+}
+// periods that actually carry data for a product group (new groups start mid-history)
+function periodsWithData(ga){
+  const s=new Set(RAW.coverage.filter(r=>r.ga===ga).map(r=>r.period));
+  RAW.mi.filter(r=>r.ga===ga).forEach(r=>s.add(r.period));
+  return PERIODS.filter(p=>s.has(p));
+}
+function hasData(ga,period){ return periodsWithData(ga).includes(period); }
+function populateBrandFilter(){
+  const fb=$('fBrand'); const avail=brandsForProduct(F.product);
+  if(!avail.includes(F.brand)) F.brand=avail[0]||'TRW';
+  fb.innerHTML='';
+  avail.forEach(b=>fb.add(new Option(b,b)));
+  fb.value=F.brand;
+}
+function brandsSel(){ return [F.brand]; }
+
+/* ============ Aggregation ============ */
+function covRows(period){ const per=period||F.period;
+  return RAW.coverage.filter(r=>r.period===per && products().includes(r.ga) && brandsSel().includes(r.brand)); }
+// one representative ZF brand per product (best combined MI), components kept consistent
+function coverageAgg(period){
+  const rows=covRows(period); const byp={};
+  rows.forEach(r=>{ const cur=byp[r.ga];
+    if(!cur || (r.combined_mi||0) > (cur.combined_mi||0)) byp[r.ga]={
+      ga:r.ga, brand:r.brand,
+      veh_demand:r.veh_demand||0, veh_cov:r.veh_cov||0, veh_mi:r.veh_mi||0,
+      art_basket:r.art_basket||0, art_cov:r.art_cov||0, art_mi:r.art_mi||0,
+      art_searches:r.art_searches||0, art_found_searches:r.art_found_searches||0, combined_mi:r.combined_mi||0, in1:r.in1||0 };
+  });
+  return Object.values(byp);
+}
+function weighted(arr,covKey,demKey){ let c=0,d=0; arr.forEach(r=>{ if(r[demKey]){c+=r[covKey]||0; d+=r[demKey];}}); return d? c/d*100:0; }
+function miAgg(period){
+  const rows=RAW.mi.filter(m=>m.period===period && products().includes(m.ga) && m.zf &&
+    (F.brand==='ALL'||m.brand===F.brand));
+  if(!rows.length) return null;
+  return rows.reduce((a,b)=>a+b.score,0)/rows.length;
+}
+// covered/total for the active search type
+function perspCov(r){
+  if(F.searchType==='vehicle') return [r.veh_cov||0, r.veh_demand||0];
+  return [r.art_cov||0, r.art_basket||0];
+}
+
+/* ============ KPIs ============ */
+const ICON = {
+  mi:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1f6fd0" stroke-width="1.7"><path d="M3 17l5-5 4 3 7-8" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 4h4v4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  veh:'<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1f6fd0" stroke-width="1.6"><path d="M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 21 8l2 5v4h-2a2 2 0 0 1-4 0H9a2 2 0 0 1-4 0H3z" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  art:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1f6fd0" stroke-width="1.6"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4" stroke-linecap="round"/></svg>',
+  dem:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1f6fd0" stroke-width="1.6"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h10M7 13h7" stroke-linecap="round"/></svg>',
+  bkt:'<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1f6fd0" stroke-width="1.6"><path d="M5 7h14l-1.2 11.2A2 2 0 0 1 15.8 20H8.2a2 2 0 0 1-2-1.8L5 7z" stroke-linejoin="round"/><path d="M9 7V5a3 3 0 0 1 6 0v2" stroke-linecap="round"/></svg>'
+};
+function deltaHTML(cur,prev,unit,invert){
+  if(prev==null||cur==null) return '<div class="ksub">no prior quarter</div>';
+  const d=cur-prev; const other=shortP(prevPeriod(F.period));
+  let cls = Math.abs(d)<0.05?'flat':((d>0)!==!!invert?'up':'down');
+  const arrow= d>0.05?'▲':(d<-0.05?'▼':'■');
+  const val = unit==='%'? (Math.abs(d)).toFixed(1)+' pp' : fmt(Math.abs(d));
+  return `<div class="kdelta ${cls}">${arrow} ${val} <span style="color:var(--muted);font-weight:600">vs ${other}</span></div>`;
+}
+function renderKPIs(){
+  const box=$('kpis'); box.innerHTML='';
+  const cov=coverageAgg();
+  const otherP = prevPeriod(F.period);
+  const covP = otherP ? coverageAgg(otherP) : [];
+  const mi=miAgg(F.period), miPrev=otherP?miAgg(otherP):null;
+  // null (not 0) when this product group has no delivery for the selected quarter
+  const vmi=cov.length?weighted(cov,'veh_cov','veh_demand'):null;
+  const ami=cov.length?weighted(cov,'art_cov','art_basket'):null;
+  const vmiP=(otherP&&covP.length)?weighted(covP,'veh_cov','veh_demand'):null;
+  const amiP=(otherP&&covP.length)?weighted(covP,'art_cov','art_basket'):null;
+  const vol=RAW.volume.filter(v=>v.period===F.period && products().includes(v.ga));
+  const volPrev=otherP?RAW.volume.filter(v=>v.period===otherP && products().includes(v.ga)):[];
+  const artS=vol.reduce((a,b)=>a+b.art_searches,0);
+  const artSp=otherP?volPrev.reduce((a,b)=>a+b.art_searches,0):null;
+  const cards=[
+    {t:'Market Indicator',ic:ICON.mi,v:mi!=null?mi.toFixed(1):'—',u:mi!=null?'%':'',d:deltaHTML(mi,miPrev,'%'),sub:F.brand+' · Combined vehicle & article MI (MI_TOP10)',accent:true,group:'mi'},
+    {t:'Vehicle Market Indicator',ic:ICON.veh,v:vmi!=null?vmi.toFixed(1):'—',u:vmi!=null?'%':'',d:deltaHTML(vmi,vmiP,'%'),sub:'basket-weighted vehicle coverage',group:'mi'},
+    {t:'Article Market Indicator',ic:ICON.art,v:ami!=null?ami.toFixed(1):'—',u:ami!=null?'%':'',d:deltaHTML(ami,amiP,'%'),sub:'basket-weighted article coverage',group:'mi'}
+  ];
+  // Build grouped layout: MI cards in a bordered group, then standalone cards
+  const miCards=cards.filter(c=>c.group==='mi');
+  const otherCards=cards.filter(c=>!c.group);
+  const grp=document.createElement('div'); grp.className='kpi-group';
+  miCards.forEach(c=>{
+    const d=document.createElement('div'); d.className='kpi'+(c.accent?' kpi-accent':'');
+    d.innerHTML=`<div class="kt">${c.t}</div>
+      <div class="krow"><div class="kicon">${c.ic}</div><div class="kbar"></div>
+      <div class="kval">${c.v}${c.u?'<small>'+c.u+'</small>':''}</div></div>
+      ${c.d}<div class="ksub">${c.sub}</div>`;
+    grp.appendChild(d);
+  });
+  box.appendChild(grp);
+  otherCards.forEach(c=>{
+    const d=document.createElement('div'); d.className='kpi'+(c.accent?' kpi-accent':'');
+    d.innerHTML=`<div class="kt">${c.t}</div>
+      <div class="krow"><div class="kicon">${c.ic}</div><div class="kbar"></div>
+      <div class="kval">${c.v}${c.u?'<small>'+c.u+'</small>':''}</div></div>
+      ${c.d}<div class="ksub">${c.sub}</div>`;
+    box.appendChild(d);
+  });
+}
+
+/* ============ CHART: coverage donut (reusable) ============ */
+function donutCoverage(hostId, covered, total){
+  const host=$(hostId); if(!host) return; clear(host);
+  const c=covered||0, d=total||0, gap=Math.max(0,d-c), covP=d? c/d:0;
+  if(!d){   // nothing delivered for this selection — don't draw a 0 % ring
+    const pd=periodsWithData(F.product);
+    host.innerHTML=emptyNote(pd.length
+      ? `No <b>${PROD[F.product]}</b> data for ${F.period}.<br>Delivered: <b>${pd.join(', ')}</b>.`
+      : `No <b>${PROD[F.product]}</b> data.`);
+    return;
+  }
+  const W=320,H=300,cx=W/2,cy=150,R=92,r=58;
+  const s=svg(W,H); host.appendChild(s);
+  const segs=[{v:c,col:C.blue,lab:'Covered'},{v:gap,col:C.teal,lab:'Gap'}];
+  let a0=-Math.PI/2;
+  segs.forEach(sg=>{ const frac=d?sg.v/d:0; const a1=a0+frac*2*Math.PI;
+    const p=el('path',{d:arc(cx,cy,R,r,a0,a1),fill:sg.col},s); p.style.cursor='pointer';
+    p.onmousemove=e=>showTip(e,`<b>${sg.lab}</b><br>${fmtFull(sg.v)} · ${pct(frac*100)}`); p.onmouseleave=hideTip;
+    const mid=(a0+a1)/2, lr=R+16, lx=cx+Math.cos(mid)*lr, ly=cy+Math.sin(mid)*lr;
+    if(frac>0.02){
+      txt(s,lx,ly,fmt(sg.v),{'font-size':11.5,'font-weight':700,fill:sg.col,'text-anchor':Math.cos(mid)<0?'end':'start'});
+      txt(s,lx,ly+13,pct(frac*100),{'font-size':10,fill:'#6b7c93','text-anchor':Math.cos(mid)<0?'end':'start'});
+    }
+    a0=a1;
+  });
+  txt(s,cx,cy-4,pct(covP*100),{'font-size':26,'font-weight':700,fill:C.navy,'text-anchor':'middle'});
+  txt(s,cx,cy+15,'covered',{'font-size':11,fill:'#6b7c93','text-anchor':'middle'});
+}
+function chDonutBasketArticle(){ const cov=coverageAgg(); let c=0,d=0; cov.forEach(r=>{c+=r.art_cov||0; d+=r.art_basket||0;}); donutCoverage('chDonut',c,d); }
+function chDonutSearchArticle(){ const cov=coverageAgg(); let c=0,d=0; cov.forEach(r=>{c+=r.art_found_searches||0; d+=r.art_searches||0;}); donutCoverage('chDonutSearch',c,d); }
+function chDonutBasketVehicle(){ const cov=coverageAgg(); let c=0,d=0; cov.forEach(r=>{c+=r.veh_cov||0; d+=r.veh_demand||0;}); donutCoverage('chDonutVeh',c,d); }
+function arc(cx,cy,R,r,a0,a1){
+  const p=(ang,rad)=>[cx+Math.cos(ang)*rad,cy+Math.sin(ang)*rad];
+  const [x0,y0]=p(a0,R),[x1,y1]=p(a1,R),[x2,y2]=p(a1,r),[x3,y3]=p(a0,r);
+  const big=(a1-a0)>Math.PI?1:0;
+  return `M${x0} ${y0} A${R} ${R} 0 ${big} 1 ${x1} ${y1} L${x2} ${y2} A${r} ${r} 0 ${big} 0 ${x3} ${y3} Z`;
+}
+
+/* ============ CHART: horizontal bars (generic) ============ */
+function hbar(host, items, opts){
+  opts=opts||{}; clear(host);
+  const W=opts.w||440, rowH=opts.rowH||24, padL=opts.padL||110, padR=opts.padR||52, padT=8;
+  const H=padT+items.length*rowH+6;
+  const s=svg(W,H); host.appendChild(s);
+  const max=Math.max(1,...items.map(d=>d.value));
+  const plotW=W-padL-padR;
+  items.forEach((d,i)=>{
+    const y=padT+i*rowH; const bw=plotW*(d.value/max);
+    const lbl=(d.label.length>(opts.labLen||16))?d.label.slice(0,(opts.labLen||16)-1)+'…':d.label;
+    txt(s,padL-8,y+rowH/2+3,lbl,{'font-size':10.5,fill:'#42566f','text-anchor':'end','font-weight':d.bold?700:500});
+    el('rect',{x:padL,y:y+3,width:plotW,height:rowH-9,rx:3,fill:'#f0f4f9'},s);
+    const r=rrect(s,padL,y+3,bw,rowH-9,d.color||C.blue,3); r.classList.add('bar-anim'); r.style.cursor='pointer';
+    r.onmousemove=e=>showTip(e,`<b>${d.label}</b><br>${opts.tip?opts.tip(d):fmtFull(d.value)}`); r.onmouseleave=hideTip;
+    txt(s,padL+bw+6,y+rowH/2+3,opts.valFmt?opts.valFmt(d):fmt(d.value),{'font-size':10,fill:'#42566f','font-weight':600});
+  });
+}
+
+/* ============ CHART: horizontal stacked ============ */
+function hbarStacked(host, items, opts){
+  opts=opts||{}; clear(host);
+  const W=opts.w||440, rowH=24, padL=opts.padL||96, padR=46, padT=8;
+  const H=padT+items.length*rowH+6;
+  const s=svg(W,H); host.appendChild(s);
+  const max=Math.max(1,...items.map(d=>d.cov+d.gap));
+  const plotW=W-padL-padR;
+  items.forEach((d,i)=>{
+    const y=padT+i*rowH; const tot=d.cov+d.gap;
+    const wc=plotW*(d.cov/max), wg=plotW*(d.gap/max);
+    const dim = opts.highlight && d.label!==opts.highlight;
+    const _ll=opts.labLen||14; const lbl=(d.label.length>_ll)?d.label.slice(0,_ll-1)+'…':d.label;
+    txt(s,padL-8,y+rowH/2+3,lbl,{'font-size':10.5,fill:dim?'#9fb0c6':'#42566f','text-anchor':'end','font-weight':opts.highlight&&d.label===opts.highlight?800:600});
+    const rc=rrect(s,padL,y+3,wc,rowH-9,C.blue,0); rc.classList.add('bar-anim');
+    const rg=rrect(s,padL+wc,y+3,wg,rowH-9,C.teal,0); rg.classList.add('bar-anim');
+    if(dim){ rc.setAttribute('opacity',.3); rg.setAttribute('opacity',.3); }
+    [rc,rg].forEach((rr)=>{ rr.style.cursor='pointer';
+      rr.onmousemove=e=>showTip(e,`<b>${d.label}</b><br>Covered: ${fmtFull(d.cov)} (${pct(d.cov/tot*100)})<br>Gap: ${fmtFull(d.gap)} (${pct(d.gap/tot*100)})`);
+      rr.onmouseleave=hideTip; });
+    if(wc>26) txt(s,padL+wc/2,y+rowH/2+3,fmt(d.cov),{'font-size':9.5,fill:'#fff','text-anchor':'middle','font-weight':700});
+    txt(s,padL+wc+wg+6,y+rowH/2+3,fmt(tot),{'font-size':10,fill:dim?'#9fb0c6':'#42566f','font-weight':600});
+  });
+}
+
+/* ============ CHART: multi-series line (trends) ============ */
+function lineChart(host, series, cats, opts){
+  opts=opts||{}; clear(host);
+  const W=opts.w||440, H=opts.h||300, padL=46, padR=18, padT=16, padB=34;
+  const s=svg(W,H); host.appendChild(s);
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const ymin=opts.ymin!=null?opts.ymin:0, ymax=opts.ymax!=null?opts.ymax:100;
+  const X=i=>cats.length<=1?padL+plotW/2:padL+plotW*i/(cats.length-1);
+  const Y=v=>padT+plotH*(1-(v-ymin)/(ymax-ymin));
+  for(let g=ymin; g<=ymax+0.001; g+=opts.ystep||20){ const y=Y(g);
+    el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#eef2f7'},s);
+    txt(s,padL-8,y+3,g+(opts.yunit||''),{'font-size':9,fill:'#9fb6d2','text-anchor':'end'}); }
+  cats.forEach((c,i)=>txt(s,X(i),H-12,c,{'font-size':11,fill:'#42566f','text-anchor':'middle','font-weight':600}));
+  // First pass: draw lines and dots; collect label candidates per x-column
+  const labelCols = cats.map(()=>[]); // per column: [{y, text, color}]
+  series.forEach(se=>{
+    let dpath='';
+    se.values.forEach((v,i)=>{ if(v==null) return; dpath+=(dpath?'L':'M')+X(i)+' '+Y(v)+' '; });
+    const sw=se.width||2.4;
+    const pathAttrs={d:dpath.trim(),fill:'none',stroke:se.color,'stroke-width':sw,'stroke-linejoin':'round','stroke-linecap':'round'};
+    if(se.dash) pathAttrs['stroke-dasharray']=se.dash;
+    if(dpath) el('path',pathAttrs,s);
+    se.values.forEach((v,i)=>{ if(v==null) return;
+      const cc=el('circle',{cx:X(i),cy:Y(v),r:se.width?5:4.5,fill:'#fff',stroke:se.color,'stroke-width':sw},s); cc.style.cursor='pointer';
+      cc.onmousemove=e=>showTip(e,`<b>${se.label}</b><br>${cats[i]}: ${opts.valFmt?opts.valFmt(v):v.toFixed(1)+(opts.yunit||'')}`); cc.onmouseleave=hideTip;
+      if(se.showVals!==false) labelCols[i].push({y:Y(v), text:opts.valFmt?opts.valFmt(v):v.toFixed(1), color:se.color});
+    });
+  });
+  // Second pass: de-overlap labels within each column
+  const LH=12; // minimum vertical gap between label centres
+  labelCols.forEach((col,i)=>{
+    if(!col.length) return;
+    // sort by natural y position (top to bottom)
+    col.sort((a,b)=>a.y-b.y);
+    // place labels above their dot at y-9, then push apart if too close
+    col.forEach(lb=>{ lb.ly=lb.y-9; });
+    // iterative upward sweep: if two labels are too close, push the upper one up
+    for(let pass=0;pass<20;pass++){
+      let moved=false;
+      for(let j=1;j<col.length;j++){
+        const gap=col[j].ly-col[j-1].ly;
+        if(gap<LH){ const push=(LH-gap)/2; col[j-1].ly-=push; col[j].ly+=push; moved=true; }
+      }
+      if(!moved) break;
+    }
+    col.forEach(lb=>txt(s,X(i),lb.ly,lb.text,{'font-size':9.5,fill:lb.color,'font-weight':700,'text-anchor':'middle'}));
+  });
+}
+
+/* ============ CHART: grouped vertical bars (trend volume) ============ */
+function groupedBars(host, cats, series, opts){
+  opts=opts||{}; clear(host);
+  const W=opts.w||440,H=opts.h||300,padL=44,padR=16,padT=16,padB=34;
+  const s=svg(W,H); host.appendChild(s);
+  const plotW=W-padL-padR, plotH=H-padT-padB;
+  const max=Math.max(1,...series.flatMap(se=>se.values));
+  const ng=cats.length, gw=plotW/ng, bw=Math.min(46,(gw*0.62)/series.length);
+  [0,.25,.5,.75,1].forEach(f=>{ const y=padT+plotH*(1-f);
+    el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#eef2f7'},s);
+    txt(s,padL-8,y+3,fmt(max*f),{'font-size':9,fill:'#9fb6d2','text-anchor':'end'}); });
+  cats.forEach((c,i)=>{
+    const gx=padL+gw*i+gw/2;
+    txt(s,gx,H-12,c,{'font-size':11,fill:'#42566f','text-anchor':'middle','font-weight':600});
+    series.forEach((se,j)=>{
+      const v=se.values[i]||0; const h=plotH*(v/max);
+      const x=gx-(series.length*bw)/2+j*bw+2;
+      const r=rrect(s,x,padT+plotH-h,bw-3,h,se.color,2); r.classList.add('bar-anim'); r.style.cursor='pointer';
+      r.onmousemove=e=>showTip(e,`<b>${se.label}</b><br>${c}: ${fmtFull(v)}`); r.onmouseleave=hideTip;
+      txt(s,x+(bw-3)/2,padT+plotH-h-4,fmt(v),{'font-size':9,fill:se.color,'font-weight':700,'text-anchor':'middle'});
+    });
+  });
+}
+
+/* ============ CHART: MI competition ============ */
+function miBrandRows(period){
+  if(F.product==='ALL'){
+    const m={}; RAW.mi.filter(x=>x.period===period && products().includes(x.ga)).forEach(x=>{(m[x.brand]||(m[x.brand]={s:0,n:0,zf:x.zf})); m[x.brand].s+=x.score; m[x.brand].n++;});
+    return Object.entries(m).map(([b,v])=>({label:b,value:v.s/v.n,zf:v.zf}));
+  }
+  return RAW.mi.filter(x=>x.period===period && x.ga===F.product).map(x=>({label:x.brand,value:x.score,zf:x.zf,pos:x.pos}));
+}
+function chMIcomp(hostId){
+  const host=$(hostId); if(!host) return; clear(host);
+  let rows=miBrandRows(F.period).sort((a,b)=>b.value-a.value).slice(0,10);
+  rows.forEach(r=>{ r.color=r.zf?C.navy:C.grey; r.bold=r.zf; });
+  hbar(host,rows,{w:430,padL:118,labLen:18,rowH:23,
+    valFmt:d=>d.value.toFixed(1)+'%', tip:d=>(d.zf?'ZF brand · ':'Competitor · ')+d.value.toFixed(1)+'% MI'});
+}
+
+/* ============ CHART: vehicle brand demand ============ */
+function vbrandRows(){
+  const rows=RAW.vbrand.filter(v=>v.period===F.period && products().includes(v.ga));
+  // choose one ZF brand per product (demand is shared across brands; coverage differs)
+  const chosen={};
+  products().forEach(ga=>{
+    const zs=[...new Set(rows.filter(r=>r.ga===ga).map(r=>r.zf))];
+    if(!zs.length) return;
+    if(F.brand!=='ALL' && zs.includes(F.brand)){ chosen[ga]=F.brand; return; }
+    let best=zs[0],bestR=-1;
+    zs.forEach(z=>{ const rs=rows.filter(r=>r.ga===ga&&r.zf===z);
+      const c=rs.reduce((a,b)=>a+b.cov,0),d=rs.reduce((a,b)=>a+b.demand,0); const r=d?c/d:0; if(r>bestR){bestR=r;best=z;} });
+    chosen[ga]=best;
+  });
+  const m={};
+  rows.forEach(v=>{ if(chosen[v.ga]!==v.zf) return;
+    const o=m[v.vb]||(m[v.vb]={cov:0,dem:0}); o.dem+=v.demand; o.cov+=v.cov; });
+  let out=Object.entries(m).map(([b,o])=>({label:b,cov:o.cov,gap:Math.max(0,o.dem-o.cov),dem:o.dem}));
+  out.sort((a,b)=>b.dem-a.dem); return out;
+}
+function chVbrand(){
+  let rows=vbrandRows().slice(0,12);
+  if(!rows.length){
+    const pd=periodsWithData(F.product);
+    $('chVbrand').innerHTML=emptyNote(pd.length
+      ? `No <b>${PROD[F.product]}</b> vehicle-search data for ${F.period}.<br>Delivered: <b>${pd.join(', ')}</b>.`
+      : `No <b>${PROD[F.product]}</b> vehicle-search data.`);
+    return;
+  }
+  hbarStacked($('chVbrand'),rows,{w:560,padL:130,highlight:F.vbrand!=='ALL'?F.vbrand:null});
+}
+
+
+/* ============ CHART: MI ranking ============ */
+function chMIrank(){
+  const host=$('chMIrank');
+  let rows=miBrandRows(F.period).filter(r=>r.label!=='OTHER').sort((a,b)=>b.value-a.value);
+  if(!rows.length){
+    const pd=periodsWithData(F.product);
+    host.innerHTML=emptyNote(pd.length
+      ? `No MI_TOP10 ranking for <b>${PROD[F.product]}</b> in ${F.period}. Delivered: <b>${pd.join(', ')}</b>.`
+      : `No MI_TOP10 ranking for <b>${PROD[F.product]}</b>.`);
+    return;
+  }
+  rows.forEach(r=>{r.color=r.zf?C.navy:C.grey; r.bold=r.zf;});
+  hbar(host,rows,{w:560,padL:150,labLen:24,rowH:24,
+    valFmt:d=>d.value.toFixed(1)+'%',tip:d=>(d.zf?'ZF Aftermarket brand':'Competitor')+' · '+d.value.toFixed(1)+'%'});
+}
+
+/* ============ CHART: MI movement ============ */
+function chMImove(){
+  const host=$('chMImove'); clear(host);
+  // compare against the previous quarter this product group actually has data for
+  const pd=periodsWithData(F.product);
+  if(pd.length<2){
+    $('moveSfx').textContent = pd.length? '('+pd[0]+' only)' : '';
+    host.innerHTML=emptyNote(pd.length
+      ? `Only one quarter (${pd[0]}) has been delivered for this product group — no movement to compare yet.`
+      : 'No Market Indicator data for this product group.');
+    return;
+  }
+  const iCur=pd.indexOf(F.period);
+  let pA,pB;
+  if(iCur>0){ pA=pd[iCur-1]; pB=pd[iCur]; }                 // previous delivered quarter -> selected
+  else { pA=pd[0]; pB=pd[pd.length-1]; }                    // first (or unavailable) -> whole delivered range
+  $('moveSfx').textContent='('+pA+' → '+pB+')';
+  function avg(per){ const m={}; RAW.mi.filter(x=>x.period===per && products().includes(x.ga)).forEach(x=>{(m[x.brand]||(m[x.brand]={s:0,n:0,zf:x.zf})); m[x.brand].s+=x.score; m[x.brand].n++;});
+    const o={}; for(const b in m) o[b]={v:m[b].s/m[b].n,zf:m[b].zf}; return o; }
+  const a=avg(pA), b=avg(pB);
+  let rows=[]; for(const br in b){ if(a[br]!=null) rows.push({label:br,d:b[br].v-a[br].v,zf:b[br].zf,from:a[br].v,to:b[br].v}); }
+  rows.sort((x,y)=>y.d-x.d);
+  const top=rows.slice(0,5), bot=rows.slice(-5);
+  rows=top.concat(bot.filter(r=>!top.includes(r))); rows.sort((x,y)=>y.d-x.d);
+  const W=440,rowH=26,padL=130,padR=44,padT=8,mid=(W-padL-padR)/2+padL;
+  const H=padT+rows.length*rowH+8; const s=svg(W,H); host.appendChild(s);
+  const max=Math.max(1,...rows.map(r=>Math.abs(r.d)));
+  el('line',{x1:mid,y1:padT,x2:mid,y2:H-8,stroke:'#cdd9e8','stroke-width':1},s);
+  rows.forEach((r,i)=>{
+    const y=padT+i*rowH; const w=(W-padL-padR)/2*(Math.abs(r.d)/max);
+    const pos=r.d>=0; const col=pos?C.green:C.red;
+    const lbl=(r.label.length>20)?r.label.slice(0,19)+'…':r.label;
+    txt(s,padL-10,y+rowH/2+3,lbl,{'font-size':10.5,fill:'#42566f','text-anchor':'end','font-weight':r.zf?700:500});
+    const x=pos?mid:mid-w; const rr=rrect(s,x,y+4,w,rowH-12,col,2); rr.classList.add('bar-anim'); rr.style.cursor='pointer';
+    rr.onmousemove=e=>showTip(e,`<b>${r.label}</b><br>${r.from.toFixed(1)}% → ${r.to.toFixed(1)}%<br>${pos?'+':''}${r.d.toFixed(1)} pp`); rr.onmouseleave=hideTip;
+    txt(s,pos?x+w+5:x-5,y+rowH/2+3,(pos?'+':'')+r.d.toFixed(1),{'font-size':10,fill:col,'font-weight':700,'text-anchor':pos?'start':'end'});
+  });
+}
+
+/* ============ CHART: perspective vertical bars (single product) ============ */
+function chPersp(){
+  const host=$('chPersp'); clear(host);
+  const r=coverageAgg()[0];
+  if(!r || (!r.veh_demand && !r.art_basket)){host.innerHTML='<div class="csub">No data</div>';return;}
+  const bars=[{lab:'Vehicle MI',v:r.veh_mi||0,col:C.navy},{lab:'Article MI',v:r.art_mi||0,col:C.teal}];
+  const W=480,H=340,padT=20,padB=42,padL=46,padR=22;
+  const s=svg(W,H); host.appendChild(s);
+  const plotH=H-padT-padB, plotW=W-padL-padR;
+  [0,25,50,75,100].forEach(g=>{ const y=padT+plotH*(1-g/100);
+    el('line',{x1:padL,y1:y,x2:W-padR,y2:y,stroke:'#eef2f7'},s);
+    txt(s,padL-8,y+3,g+'%',{'font-size':9,fill:'#9fb6d2','text-anchor':'end'}); });
+  const n=bars.length, gap=70, bw=Math.min(120,(plotW-gap*(n-1))/n);
+  const startX=padL+(plotW-(n*bw+gap*(n-1)))/2;
+  bars.forEach((d,i)=>{
+    const x=startX+i*(bw+gap); const h=plotH*(d.v/100);
+    const rr=rrect(s,x,padT+plotH-h,bw,h,d.col,3); rr.classList.add('bar-anim'); rr.style.cursor='pointer';
+    rr.onmousemove=e=>showTip(e,`<b>${d.lab}</b><br>${d.v.toFixed(1)}%`); rr.onmouseleave=hideTip;
+    txt(s,x+bw/2,padT+plotH-h-8,d.v.toFixed(1)+'%',{'font-size':14,fill:d.col,'font-weight':700,'text-anchor':'middle'});
+    txt(s,x+bw/2,H-20,d.lab,{'font-size':12.5,fill:'#21354d','font-weight':700,'text-anchor':'middle'});
+  });
+}
+
+/* ============ CHART: OE vs IAM donut ============ */
+function chOE(){
+  const host=$('chOE'); clear(host);
+  const rows=RAW.oe.filter(o=>o.period===F.period && products().includes(o.ga));
+  let oe=rows.reduce((a,b)=>a+b.oe,0), non=rows.reduce((a,b)=>a+b.non_oe,0), tot=oe+non;
+  const W=360,H=240,cx=120,cy=120,R=82,r=50;
+  const s=svg(W,H); host.appendChild(s);
+  let a0=-Math.PI/2; const segs=[{v:oe,col:C.blue,lab:'OE number'},{v:non,col:C.amber,lab:'Non-OE number'}];
+  segs.forEach(sg=>{ const f=tot?sg.v/tot:0; const a1=a0+f*2*Math.PI;
+    const p=el('path',{d:arc(cx,cy,R,r,a0,a1),fill:sg.col},s); p.style.cursor='pointer';
+    p.onmousemove=e=>showTip(e,`<b>${sg.lab}</b><br>${fmtFull(sg.v)} · ${pct(f*100)}`); p.onmouseleave=hideTip; a0=a1; });
+  txt(s,cx,cy-2,fmt(tot),{'font-size':20,'font-weight':700,fill:C.navy,'text-anchor':'middle'});
+  txt(s,cx,cy+15,'searches',{'font-size':10,fill:'#6b7c93','text-anchor':'middle'});
+  segs.forEach((sg,i)=>{ const y=86+i*40;
+    el('rect',{x:236,y:y-10,width:12,height:12,rx:2,fill:sg.col},s);
+    txt(s,254,y,sg.lab,{'font-size':12,fill:'#21354d','font-weight':600});
+    txt(s,254,y+15,fmt(sg.v)+' · '+pct((tot?sg.v/tot:0)*100),{'font-size':11,fill:'#6b7c93'});
+  });
+}
+
+/* ============ Insights ============ */
+function renderInsights(){
+  const box=$('insights'); box.innerHTML='';
+  const cov=coverageAgg();
+  const vmi=weighted(cov,'veh_cov','veh_demand'), ami=weighted(cov,'art_cov','art_basket');
+  const miRows=RAW.mi.filter(m=>m.period===F.period && products().includes(m.ga));
+  let leader; if(F.product==='ALL'){ const m={}; miRows.forEach(x=>{(m[x.brand]||(m[x.brand]={s:0,n:0,zf:x.zf})); m[x.brand].s+=x.score;m[x.brand].n++;});
+    leader=Object.entries(m).map(([b,v])=>({b,v:v.s/v.n,zf:v.zf})).sort((a,b)=>b.v-a.v)[0];
+  } else { const r=miRows.slice().sort((a,b)=>b.score-a.score)[0]; leader=r?{b:r.brand,v:r.score,zf:r.zf}:null; }
+  const zfRows=miRows.filter(m=>m.zf).slice().sort((a,b)=>b.score-a.score); const bestZF=zfRows[0];
+  const gapP=cov.map(r=>({n:PROD[r.ga],gap:((r.veh_demand||0)+(r.art_basket||0))-((r.veh_cov||0)+(r.art_cov||0))})).sort((a,b)=>b.gap-a.gap)[0];
+  const vb=vbrandRows()[0];
+  const ua=RAW.gap_art.filter(g=>g.period===F.period&&products().includes(g.ga)).sort((a,b)=>b.demand-a.demand)[0];
+  function avg(per){const m={};RAW.mi.filter(x=>x.period===per&&products().includes(x.ga)).forEach(x=>{(m[x.brand]||(m[x.brand]={s:0,n:0,zf:x.zf}));m[x.brand].s+=x.score;m[x.brand].n++;});const o={};for(const b in m)o[b]={v:m[b].s/m[b].n,zf:m[b].zf};return o;}
+  let mpA=prevPeriod(F.period), mpB=F.period; if(!mpA){ mpA=PERIODS[0]; mpB=PERIODS[PERIODS.length-1]; }
+  const A=avg(mpA),B=avg(mpB); let mv=[]; for(const b in B) if(A[b]!=null) mv.push({b,d:B[b].v-A[b].v,zf:B[b].zf});
+  const gain=mv.slice().sort((x,y)=>y.d-x.d)[0], lose=mv.slice().sort((x,y)=>x.d-y.d)[0];
+
+  const cards=[];
+  cards.push({c:'',h:'Coverage gap is in article search, not vehicles',
+    p:`Vehicle MI sits at <b>${vmi.toFixed(1)}%</b> while Article MI is <b>${ami.toFixed(1)}%</b>. Vehicle linkages are strong; the real opportunity is closing the <b>${(vmi-ami).toFixed(0)} pp</b> article-number gap.`});
+  if(leader) cards.push({c:'teal',h:'Market Indicator leader',
+    p:`<b>${leader.b}</b> leads with <b>${leader.v.toFixed(1)}%</b>${leader.zf?' (a ZF brand)':''}. Best ZF position: <b>${bestZF?bestZF.brand:'—'}</b> at <b>${bestZF?bestZF.score.toFixed(1):'—'}%</b>${bestZF&&!leader.zf?' — chasing the front-runner.':'.'}`});
+  if(gapP) cards.push({c:'red',h:'Biggest absolute coverage gap',
+    p:`<b>${gapP.n}</b> carries the largest open demand at <b>${fmt(gapP.gap)}</b> unfulfilled basket positions — the priority category for portfolio &amp; cross-reference work.`});
+  if(vb) cards.push({c:'amber',h:'Where demand concentrates',
+    p:`<b>${vb.label}</b> vehicles drive the most search demand (<b>${fmt(vb.dem)}</b> basket positions). Coverage there moves the needle fastest.`});
+  if(gain&&lose) cards.push({c:'green',h:'Competitive momentum',
+    p:`<b>${gain.b}</b> gained <b>+${gain.d.toFixed(1)} pp</b> ${mpA}→${mpB}, while <b>${lose.b}</b> slipped <b>${lose.d.toFixed(1)} pp</b>. Watch shifting positions in the ranking.`});
+  if(ua) cards.push({c:'',h:'Single biggest quick win',
+    p:`Search term <b>${ua.search}</b> ${ua.oe?'(an OE number) ':''}was queried <b>${fmtFull(ua.demand)}</b> times with no match — a concrete cross-reference to add.`});
+  cards.slice(0,6).forEach(c=>{ const d=document.createElement('div'); d.className='ins '+(c.c||'');
+    d.innerHTML=`<h4>${c.h}</h4><p>${c.p}</p>`; box.appendChild(d); });
+}
+
+/* ============ Trends ============ */
+function chTrendMI(){
+  // colour palette per ZF brand (solid = Vehicle MI, dashed = Article MI)
+  const BRAND_COL = {'TRW':C.navy,'SACHS':C.amber,'LEMFÖRDER':C.green,'ZF':C.teald};
+  const brands = brandsForProduct(F.product);
+  const series = [];
+  brands.forEach(b=>{
+    const col = BRAND_COL[b] || C.blue;
+    const vehVals = PERIODS.map(p=>{
+      const r = RAW.coverage.find(x=>x.period===p && x.ga===F.product && x.brand===b);
+      return (r && r.veh_demand) ? r.veh_cov/r.veh_demand*100 : null;
+    });
+    const artVals = PERIODS.map(p=>{
+      const r = RAW.coverage.find(x=>x.period===p && x.ga===F.product && x.brand===b);
+      return (r && r.art_basket) ? r.art_cov/r.art_basket*100 : null;
+    });
+    series.push({label:b+' — Vehicle MI', color:col, width:2.5, values:vehVals});
+    series.push({label:b+' — Article MI', color:col, width:2, dash:'5,3', values:artVals});
+  });
+  // build dynamic legend
+  const leg=$('legendTrendMI'); if(leg){
+    leg.innerHTML='';
+    brands.forEach(b=>{
+      const col=BRAND_COL[b]||C.blue;
+      leg.innerHTML+=`<span><svg width="18" height="10" style="vertical-align:middle;margin-right:3px"><line x1="0" y1="5" x2="18" y2="5" stroke="${col}" stroke-width="2.5"/></svg>${b} Vehicle</span>`;
+      leg.innerHTML+=`<span><svg width="18" height="10" style="vertical-align:middle;margin-right:3px"><line x1="0" y1="5" x2="18" y2="5" stroke="${col}" stroke-width="2" stroke-dasharray="5,3"/></svg>${b} Article</span>`;
+    });
+  }
+  const allVals=series.flatMap(s=>s.values).filter(v=>v!=null&&v>0);
+  if(!allVals.length){ $('chTrendMI').innerHTML=emptyNote('No coverage history for this product group yet.'); return; }
+  const mn=Math.min(...allVals), mx=Math.max(...allVals), span=mx-mn;
+  const step=span<=12?3:span<=30?5:10;
+  const lo=Math.max(0,Math.floor((mn-3)/step)*step), hi=Math.min(100,Math.ceil((mx+3)/step)*step);
+  lineChart($('chTrendMI'),series,PERIODS,{w:540,h:340,ymin:lo,ymax:hi,ystep:step,yunit:'%'});
+  const pd=periodsWithData(F.product);
+  if(pd.length<2 && leg) leg.innerHTML+=`<span style="color:var(--muted);font-weight:600">· single quarter delivered (${pd.join(', ')}) — no trend line yet</span>`;
+}
+function chTrendZF(){
+  const brands=brandsSel();
+  const cols={'TRW':C.navy,'SACHS':C.teal,'LEMFÖRDER':C.blue,'ZF':C.teald};
+  const series=brands.map(b=>{
+    const vals=PERIODS.map(p=>{ const rows=RAW.mi.filter(m=>m.period===p&&m.brand===b&&products().includes(m.ga));
+      return rows.length? rows.reduce((a,x)=>a+x.score,0)/rows.length : null; });
+    return {label:b,color:cols[b]||C.amber,values:vals};
+  }).filter(se=>se.values.some(v=>v!=null));
+  const all=series.flatMap(se=>se.values).filter(v=>v!=null);
+  const lo=Math.max(0,Math.floor((Math.min(...all)-5)/10)*10), hi=Math.min(100,Math.ceil((Math.max(...all)+5)/10)*10);
+  const host=$('chTrendZF');
+  lineChart(host, series, PERIODS, {w:520,h:300,ymin:lo,ymax:hi,ystep:10,yunit:'%'});
+  let leg='<div class="legend" style="margin-top:6px">'+series.map(se=>`<span><i class="dot" style="background:${se.color}"></i>${se.label}</span>`).join('')+'</div>';
+  host.insertAdjacentHTML('beforeend',leg);
+}
+/* ============ CHART: MI vs competition over time ============ */
+function chTrendComp(){
+  const host=$('chTrendComp'); clear(host);
+  const zfset=new Set(brandsForProduct(F.product));
+  // rank on the newest period this product group actually has, not the newest in the file
+  const pd=periodsWithData(F.product);
+  const latest=pd.length?pd[pd.length-1]:PERIODS[PERIODS.length-1];
+  const ranked=RAW.mi.filter(m=>m.ga===F.product && m.period===latest).slice().sort((a,b)=>b.score-a.score);
+  const chosen=[];
+  ranked.forEach(r=>{ if(zfset.has(r.brand)) chosen.push(r.brand); });        // selected product's ZF brands first
+  ranked.forEach(r=>{ if(!zfset.has(r.brand) && chosen.length<6) chosen.push(r.brand); }); // then top competitors (cap ~6 lines)
+  const zfCols={'TRW':C.navy,'SACHS':C.teald,'LEMFÖRDER':C.blued,'ZF':C.navy};
+  const compPal=['#e8a33d','#7e57c2','#ec407a','#8d6e63','#5c93b8','#789262'];
+  let ci=0;
+  const series=chosen.map(br=>{
+    const isZF=zfset.has(br);
+    const vals=PERIODS.map(p=>{ const r=RAW.mi.find(m=>m.ga===F.product&&m.period===p&&m.brand===br); return r?r.score:null; });
+    return {label:br+(isZF?' (ZF)':''), color:isZF?(zfCols[br]||C.navy):compPal[(ci++)%compPal.length],
+            values:vals, width:isZF?3.4:2, showVals:false};
+  }).filter(s=>s.values.some(v=>v!=null));
+  const all=series.flatMap(s=>s.values).filter(v=>v!=null);
+  if(!all.length){ host.innerHTML=emptyNote('No Market Indicator history for this product group yet.'); return; }
+  const mn=Math.min(...all), mx=Math.max(...all), span=mx-mn;
+  const step = span<=12?3 : span<=30?5 : 10;
+  const lo=Math.max(0, Math.floor((mn-2)/step)*step), hi=Math.min(100, Math.ceil((mx+2)/step)*step);
+  lineChart(host, series, PERIODS, {w:540,h:360,ymin:lo,ymax:hi,ystep:step,yunit:'%'});
+  let leg='<div class="legend" style="margin-top:8px;flex-wrap:wrap">'+series.map(s=>`<span><i class="dot" style="background:${s.color}"></i>${s.label}</span>`).join('')+'</div>';
+  host.insertAdjacentHTML('beforeend',leg);
+}
+function tblTrend(){
+  function metrics(p){ const cov=coverageAgg(p);
+    // a quarter with no delivery for this product group reads "—", not 0%
+    if(!cov.length) return {vmi:null,ami:null,comb:null,artB:null,veh:null,mi:miAgg(p)};
+    const vmi=weighted(cov,'veh_cov','veh_demand'), ami=weighted(cov,'art_cov','art_basket');
+    let cc=0,dd=0; cov.forEach(r=>{cc+=(r.veh_cov||0)+(r.art_cov||0); dd+=(r.veh_demand||0)+(r.art_basket||0);});
+    const comb=dd?cc/dd*100:null;
+    const vol=RAW.volume.filter(v=>v.period===p&&products().includes(v.ga));
+    const artB=cov.reduce((a,b)=>a+(b.art_basket||0),0);
+    return {vmi,ami,comb,artB,veh:vol.reduce((a,b)=>a+b.veh_demand,0),mi:miAgg(p)};
+  }
+  const M=PERIODS.map(p=>({p,...metrics(p)}));
+  const rows=[
+    ['Market Indicator (MI_TOP10)','mi','%'],
+    ['Vehicle MI','vmi','%'],
+    ['Article MI','ami','%'],
+    ['Combined MI','comb','%'],
+    ['Article basket additions','artB','#'],
+    ['Vehicle basket additions','veh','#']
+  ];
+  const last=M.length-1, prev=M.length-2, first=0;
+  const totLbl=`Δ ${shortP(PERIODS[first])}→${shortP(PERIODS[last])}`;
+  let h='<table class="dt"><thead><tr><th>Metric</th>'+PERIODS.map(p=>`<th style="text-align:right">${p}</th>`).join('')+`<th style="text-align:right">Δ latest</th><th style="text-align:right">${totLbl}</th></tr></thead><tbody>`;
+  rows.forEach(([name,key,u])=>{
+    h+=`<tr><td style="font-weight:600;color:var(--navy)">${name}</td>`;
+    M.forEach((m,i)=>{ const v=m[key]; const bold=i===last?';font-weight:700':'';
+      h+=`<td style="text-align:right${bold}">${v==null?'—':(u==='%'?v.toFixed(1)+'%':fmt(v))}</td>`; });
+    const fmtDelta=(a,bcur)=>{ if(a==null||bcur==null) return ['—','var(--muted)'];
+      const d=bcur-a; const col=Math.abs(d)<(u==='%'?0.05:0.5)?'var(--muted)':(d>0?'var(--green)':'var(--red)');
+      return [u==='%'?(d>0?'+':'')+d.toFixed(1)+' pp':(d>0?'+':'')+fmt(d), col]; };
+    const [dvL,colL]=fmtDelta(M[prev]&&M[prev][key], M[last][key]);
+    const [dvT,colT]=fmtDelta(M[first]&&M[first][key], M[last][key]);
+    h+=`<td style="text-align:right;color:${colL};font-weight:700">${dvL}</td>`;
+    h+=`<td style="text-align:right;color:${colT};font-weight:700">${dvT}</td></tr>`;
+  });
+  h+='</tbody></table>'; $('tblTrend').innerHTML=h;
+}
+
+/* ============ Render ============ */
+// Product groups enter the programme at different quarters, so a period/product
+// combination can legitimately have no delivery. Say so instead of drawing zeros.
+function renderNoDataBanner(){
+  const b=$('noDataBanner'); if(!b) return;
+  const pd=periodsWithData(F.product);
+  const onTrends = F.page==='trends';
+  if(!pd.length){
+    b.style.display=''; b.innerHTML=`No data delivered for <b>${PROD[F.product]}</b> in any quarter.`;
+  } else if(!onTrends && !pd.includes(F.period)){
+    b.style.display='';
+    b.innerHTML=`<b>${PROD[F.product]}</b> was not part of the <b>${F.period}</b> delivery. `+
+      `Available ${pd.length>1?'quarters':'quarter'}: <b>${pd.join(', ')}</b>.`;
+  } else if(onTrends && pd.length<PERIODS.length){
+    b.style.display='';
+    b.innerHTML=`<b>${PROD[F.product]}</b> has been delivered for <b>${pd.join(', ')}</b> only — `+
+      `other quarters show no value rather than zero.`;
+  } else {
+    b.style.display='none'; b.innerHTML='';
+  }
+}
+function render(){
+  const veh = F.searchType==='vehicle';
+  renderNoDataBanner();
+  if(F.page==='overview'){
+    renderKPIs();
+    if(veh){ chDonutBasketVehicle(); chVbrand(); }
+    else { chDonutBasketArticle(); chDonutSearchArticle(); }
+  } else if(F.page==='competition'){
+    chMIrank(); chMImove();
+  } else if(F.page==='trends'){
+    chTrendMI(); chTrendComp(); tblTrend();
+  }
+  const pdSel=periodsWithData(F.product);
+  const covNote = pdSel.length && pdSel.length<PERIODS.length
+    ? ` · ${PROD[F.product]} delivered for ${pdSel.join(', ')} only` : '';
+  $('foot').innerHTML = `Source: TopMotive workshop search data (TopMotive Project) · Periods: ${PERIODS[0]} – ${PERIODS[PERIODS.length-1]} · Product groups: ${Object.values(PROD).join(', ')} · ZF Aftermarket brands: ${zfBrandOrder().join(', ')}${covNote}<br>Market Indicator per provider method: Vehicle MI = basket-weighted vehicle coverage (Rule R2, BSK_POS) · Article MI = basket-weighted article coverage (Rule R1, GENART_QTY_POS) · Combined = basket-ratio weighted average. Search coverage is an article-search measure; vehicle searches are quantified in basket positions. MI_TOP10 used for competitive ranking. Basket datasets (dvse_BSK) excluded per scope.`;
+}
+// On (re)load, browsers may restore the previously-selected dropdown values without firing change events.
+// Re-sync app state FROM the controls so the charts always match what the dropdowns display.
+function syncFromControls(){
+  const fpr=$('fProduct'), fp=$('fPeriod'), fb=$('fBrand');
+  const prodVals=Object.keys(PROD);
+  if(fpr){ if(prodVals.includes(fpr.value)) F.product=fpr.value; else fpr.value=F.product; }
+  if(fp){ if(PERIODS.includes(fp.value)) F.period=fp.value; else fp.value=F.period; }
+  const restoredBrand = fb ? fb.value : null;   // capture before rebuilding brand options
+  populateBrandFilter();
+  if(restoredBrand && brandsForProduct(F.product).includes(restoredBrand)){ F.brand=restoredBrand; $('fBrand').value=restoredBrand; }
+  applyMode();
+  render();
+}
+window.addEventListener('mousemove',e=>{ if(tip.style.opacity==1) moveTip(e); });
+window.addEventListener('pageshow', syncFromControls);
+initFilters(); render();
+
+</script>
+</body>
+</html>
