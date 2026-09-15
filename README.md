@@ -65,7 +65,7 @@ search_mi/
   template.html             # shell: markup, CSS, charts; data goes in a placeholder
   data_legacy.json          # genart 82/273/402/854/914 — SOURCE OF TRUTH, committed
   Search_MI_Dashboard.html  # generated single-file dashboard (committed)
-data/raw_search_mi/<genart>/ # raw quarterly exports for groups built from CSV
+data/raw_search_mi/<genart>/<quarter>/  # raw exports, one folder per quarter
 ```
 
 ## Build
@@ -83,18 +83,21 @@ Two sources are merged, and the split is deliberate:
   above), so that JSON *is* the record and `build.py` copies it through
   unchanged.
 - **Genart 479, 1561, 4921** are derived from `data/raw_search_mi/<genart>/` on
-  every build. Each folder holds one quarter's seven-file TopMotive export.
+  every build. Each `<quarter>` sub-folder holds one quarter's seven-file
+  TopMotive export, e.g. `data/raw_search_mi/479/2026Q2/`.
 
 ## Adding a product group or quarter
-1. Drop the export folder's CSVs into `data/raw_search_mi/<genart>/`.
+1. Drop the export folder's CSVs into `data/raw_search_mi/<genart>/<quarter>/`
+   (e.g. `479/2026Q3/`). Adding a quarter to an existing group needs no code
+   change — the build picks up every sub-folder.
 2. For a new group, add an entry to `NEW_PRODUCTS` in `search_mi/build.py`:
    `genart -> (label, supplier number, ZF brand)`. The `DS<n>` in the filenames
    *is* that supplier number (DS32 = SACHS, DS35 = LEMFÖRDER, DS68 = ZF).
 3. `python3 search_mi/build.py`.
 
-The period is read from the filename date range and cross-checked against
-`LDATE` in the basket export, so a mislabelled folder fails the build rather
-than landing in the wrong quarter.
+The period is read from the filename date range and cross-checked against both
+`LDATE` in the basket export and the sub-folder name, so a mislabelled delivery
+fails the build rather than landing in the wrong quarter.
 
 ## How each measure is derived
 Per the definitions in *2025-04-29 TopMotive Concept* (Data Rules / Indicators):
@@ -119,10 +122,16 @@ Per the definitions in *2025-04-29 TopMotive Concept* (Data Rules / Indicators):
 the gap-scoring column are the same signal.
 
 ### Cross-check
-For all three groups built from raw CSVs, the derived `combined_mi` reproduces
-the provider's own published MI_TOP10 score **exactly**: Clutch Kit / SACHS
-87.76, Window Regulator / LEMFÖRDER 76.10, Oil Change Kit / ZF 73.77. That
-pins the formula to the provider's method.
+For every group and quarter built from raw CSVs, the derived `combined_mi`
+reproduces the provider's own published MI_TOP10 score **exactly** (6 of 6):
+
+| Group / ZF brand | Q1 2026 | Q2 2026 |
+|---|---|---|
+| Clutch Kit / SACHS | 87.76 | 87.30 |
+| Window Regulator / LEMFÖRDER | 76.90 | 76.10 |
+| Oil Change Kit / ZF | 73.77 | 73.39 |
+
+That pins the formula to the provider's method.
 
 The same check on the legacy groups scatters between −1.2 and +3.5 pp, so those
 five were built slightly differently. Their figures are left untouched — the raw
@@ -132,11 +141,15 @@ inputs no longer exist to rebuild them.
 - The `arc_*` exports are ASCII with every non-ASCII character flattened to `?`
   (`LEMF?RDER`). `build.py` repairs them against the brand names in the UTF-8
   `dvse_BSK_DLNR` export.
-- Genart 4921 has `U4_OE = 0` on every row, so its OE/non-OE split is 100 %
-  non-OE. That is the delivered data, not a build error.
+- Genart 4921 has `U4_OE = 0` on every row in both quarters, so its OE/non-OE
+  split is 100 % non-OE. That is the delivered data, not a build error.
 - The vehicle gap export carries a few hundred more KTypes than `KTypGap`. Those
   count toward `veh_demand` / `veh_cov` but cannot be labelled, so they are
   excluded from the per-manufacturer and per-model breakdowns.
-- Product groups enter the programme at different quarters. 479 and 4921 are
-  Q1 2026 only, 1561 is Q2 2026 only. Quarters with no delivery render as "—"
-  with an explanatory banner, never as 0 %.
+- Product groups enter the programme at different quarters. 479, 1561 and 4921
+  currently cover Q1 2026 and Q2 2026; the five legacy groups cover Q1 2025
+  onwards. Quarters with no delivery render as "—" with an explanatory banner,
+  never as 0 %.
+- The MI_TOP10 field changes between quarters — 479 swaps BorgWarner for
+  WESTLAKE, 1561 swaps PMM for ELECTRIC LIFE. A brand absent from one quarter
+  simply has no point on that quarter's trend line.

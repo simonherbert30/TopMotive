@@ -7,9 +7,10 @@ The dashboard's dataset is the union of two sources:
     Their raw quarterly CSVs were never recovered (see README persistence note),
     so this file *is* the record for them and is copied through untouched.
 
-  * ``data/raw_search_mi/<genart>/`` -- the raw TopMotive quarterly exports for
-    the product groups added later. Everything the dashboard shows for these is
-    derived here, so re-running this script reproduces the dataset exactly.
+  * ``data/raw_search_mi/<genart>/<quarter>/`` -- the raw TopMotive quarterly
+    exports for the product groups added later, one folder per delivered
+    quarter. Everything the dashboard shows for these is derived here, so
+    re-running this script reproduces the dataset exactly.
 
 Run:  python3 search_mi/build.py
 Out:  search_mi/Search_MI_Dashboard.html
@@ -58,13 +59,25 @@ def read_csv(path):
         return [r for r in csv.reader(fh, delimiter=";") if r]
 
 
-def find(genart, prefix):
-    """Locate the one raw file for a product group whose name starts with prefix."""
-    d = os.path.join(RAW, genart)
-    hits = sorted(f for f in os.listdir(d) if f.startswith(prefix))
+def find(folder, prefix):
+    """Locate the one raw file in a quarter folder whose name starts with prefix."""
+    hits = sorted(f for f in os.listdir(folder) if f.startswith(prefix))
     if len(hits) != 1:
-        raise SystemExit("expected exactly one %r file in %s, found %s" % (prefix, d, hits))
-    return os.path.join(d, hits[0])
+        raise SystemExit("expected exactly one %r file in %s, found %s"
+                         % (prefix, folder, hits))
+    return os.path.join(folder, hits[0])
+
+
+def quarter_folders(genart):
+    """Every delivered-quarter folder for a product group, oldest first."""
+    d = os.path.join(RAW, genart)
+    if not os.path.isdir(d):
+        raise SystemExit("no raw data folder for product group %s at %s" % (genart, d))
+    subs = sorted(f for f in os.listdir(d) if os.path.isdir(os.path.join(d, f)))
+    if not subs:
+        raise SystemExit("%s has no quarter sub-folders (expected e.g. %s/2026Q1/)"
+                         % (d, genart))
+    return [os.path.join(d, s) for s in subs]
 
 
 def period_from_filename(name):
@@ -91,14 +104,14 @@ def num(v):
             return 0
 
 
-def build_name_repair(genart):
+def build_name_repair(folder):
     """Map '?'-flattened brand names in the arc_* files back to real names.
 
     The dvse_* files are proper UTF-8 and carry the same brand names in
     DLNRBEZ, so they supply the vocabulary: 'LEMF?RDER' -> 'LEMFÖRDER'.
     """
     vocab = set()
-    for row in read_csv(find(genart, "dvse_BSK_DLNRGenart"))[1:]:
+    for row in read_csv(find(folder, "dvse_BSK_DLNRGenart"))[1:]:
         if len(row) >= 5:
             vocab.add(row[4].strip('"'))
 
@@ -126,27 +139,32 @@ def pc(part, whole, digits=2):
 
 
 # ------------------------------------------------------------ per-product ETL
-def build_product(genart, label, ds, zf_brand, out):
-    repair = build_name_repair(genart)
+def build_quarter(genart, zf_brand, folder, out):
+    repair = build_name_repair(folder)
 
-    f_mi = find(genart, "arc_MI_TOP10_")
-    f_art = find(genart, "arc_artdir_gap_scoring_")
-    f_veh = find(genart, "arc_vehicle_gap_scoring_")
-    f_ads = find(genart, "dvse_ADS+")
-    f_kty = find(genart, "dvse_KTypGap")
-    f_bsk = find(genart, "dvse_BSK_DLNRGenart")
+    f_mi = find(folder, "arc_MI_TOP10_")
+    f_art = find(folder, "arc_artdir_gap_scoring_")
+    f_veh = find(folder, "arc_vehicle_gap_scoring_")
+    f_ads = find(folder, "dvse_ADS+")
+    f_kty = find(folder, "dvse_KTypGap")
+    f_bsk = find(folder, "dvse_BSK_DLNRGenart")
 
     period = period_from_filename(os.path.basename(f_art))
     for f in (f_mi, f_veh, f_ads, f_kty, f_bsk):
         if period_from_filename(os.path.basename(f)) != period:
-            raise SystemExit("mixed periods in %s" % os.path.join(RAW, genart))
+            raise SystemExit("mixed periods in %s" % folder)
 
     # cross-check the filename period against LDATE in the basket export
     ldates = {r[1].strip('"') for r in read_csv(f_bsk)[1:] if len(r) > 1}
     want = "%s/%s" % (period.split()[1], period[1])
     if ldates != {want}:
-        raise SystemExit("period mismatch for %s: filenames say %s (LDATE %s), file has %s"
-                         % (genart, period, want, sorted(ldates)))
+        raise SystemExit("period mismatch in %s: filenames say %s (LDATE %s), file has %s"
+                         % (folder, period, want, sorted(ldates)))
+    # the folder name must agree too, so a misfiled delivery fails the build
+    expect_dir = "%sQ%s" % (period.split()[1], period[1])
+    if os.path.basename(folder) != expect_dir:
+        raise SystemExit("folder %s holds %s data (expected folder name %s)"
+                         % (folder, period, expect_dir))
 
     # ---- Market Indicator (MI_TOP10) -------------------------------------
     for row in read_csv(f_mi)[1:]:
@@ -287,12 +305,18 @@ def main():
         if zf_brand not in ZF_BRANDS:
             raise SystemExit("%r is not in zf_brands" % zf_brand)
         data["products"][genart] = label
-        built[genart] = build_product(genart, label, ds, zf_brand, data)
-        print("  %-5s %-30s %s  (ZF brand %s, DS%s)" % (genart, label, built[genart], zf_brand, ds))
+        periods = [build_quarter(genart, zf_brand, f, data)
+                   for f in quarter_folders(genart)]
+        if len(set(periods)) != len(periods):
+            raise SystemExit("product group %s has duplicate quarters: %s" % (genart, periods))
+        built[genart] = periods
+        print("  %-5s %-30s %-18s (ZF brand %s, DS%s)"
+              % (genart, label, ", ".join(periods), zf_brand, ds))
 
-    for p in set(built.values()):
-        if p not in data["periods"]:
-            raise SystemExit("period %r is not in the dashboard's period list" % p)
+    for periods in built.values():
+        for p in periods:
+            if p not in data["periods"]:
+                raise SystemExit("period %r is not in the dashboard's period list" % p)
 
     # keep the product dropdown in genart order
     data["products"] = {k: data["products"][k]

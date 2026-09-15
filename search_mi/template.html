@@ -741,7 +741,13 @@ function chMImove(){
     txt(s,padL-10,y+rowH/2+3,lbl,{'font-size':10.5,fill:'#42566f','text-anchor':'end','font-weight':r.zf?700:500});
     const x=pos?mid:mid-w; const rr=rrect(s,x,y+4,w,rowH-12,col,2); rr.classList.add('bar-anim'); rr.style.cursor='pointer';
     rr.onmousemove=e=>showTip(e,`<b>${r.label}</b><br>${r.from.toFixed(1)}% → ${r.to.toFixed(1)}%<br>${pos?'+':''}${r.d.toFixed(1)} pp`); rr.onmouseleave=hideTip;
-    txt(s,pos?x+w+5:x-5,y+rowH/2+3,(pos?'+':'')+r.d.toFixed(1),{'font-size':10,fill:col,'font-weight':700,'text-anchor':pos?'start':'end'});
+    // value label sits outside the bar, but moves inside (in white) when the bar
+    // is long enough that an outside label would run into the brand-name gutter
+    const lab=(pos?'+':'')+r.d.toFixed(1);
+    const inside = !pos && (x-5) < padL+18;
+    txt(s, inside ? x+5 : (pos?x+w+5:x-5), y+rowH/2+3, lab,
+        {'font-size':10, fill:inside?'#fff':col, 'font-weight':700,
+         'text-anchor':(pos||inside)?'start':'end'});
   });
 }
 
