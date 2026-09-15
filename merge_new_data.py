@@ -83,13 +83,12 @@ def note_brand(name, dlnr):
 
 new_article_full = defaultdict(int)   # (g,p,m,bn,nartnr) -> qty  (new genarts, full)
 new_brand = {}                        # (g,p,m,bn) -> qty
+manage = set()                        # genart codes rebuilt fresh from data/raw
 for p in sorted(glob.glob(os.path.join(RAW, "*.csv"))):
-    base = os.path.basename(p)
-    if not re.search(r"(479|1561|4921)", base):     # only the newly added genarts
-        continue
     for r in rows(p):
         if not r or not r[0].strip() or r[0].strip().upper() == "GENART":
             continue
+        manage.add(r[0])
         if len(r) >= 7:            # article: G;LDATE;LKZ;DLNR;DLNRBEZ;NARTNR;QTY
             g, pr, m, dlnr, b, n, q = r[0], r[1], r[2], r[3], r[4], r[5], r[6]
             try: q = int(q)
@@ -102,6 +101,13 @@ for p in sorted(glob.glob(os.path.join(RAW, "*.csv"))):
             except: continue
             note_brand(b, dlnr); geo.add(pr)
             new_brand[(g, pr, m, b)] = new_brand.get((g, pr, m, b), 0) + q
+
+# purge baseline entries for genarts we rebuild from raw, so re-running is
+# idempotent and never double-counts already-merged quarters
+brand_agg = {k: v for k, v in brand_agg.items() if k[0] not in manage}
+article_agg = {k: v for k, v in article_agg.items() if k[0] not in manage}
+for g in list(manage):
+    distinct.pop(g, None)
 
 # new genart distinct (from full) + lite cap of article rows
 combo_tot = defaultdict(int)
